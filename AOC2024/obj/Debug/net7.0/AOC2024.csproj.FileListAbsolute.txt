@@ -1,0 +1,14 @@
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/bin/Debug/net7.0/AOC2024
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/bin/Debug/net7.0/AOC2024.deps.json
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/bin/Debug/net7.0/AOC2024.runtimeconfig.json
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/bin/Debug/net7.0/AOC2024.dll
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/bin/Debug/net7.0/AOC2024.pdb
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/obj/Debug/net7.0/AOC2024.GeneratedMSBuildEditorConfig.editorconfig
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/obj/Debug/net7.0/AOC2024.AssemblyInfoInputs.cache
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/obj/Debug/net7.0/AOC2024.AssemblyInfo.cs
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/obj/Debug/net7.0/AOC2024.csproj.CoreCompileInputs.cache
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/obj/Debug/net7.0/AOC2024.dll
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/obj/Debug/net7.0/refint/AOC2024.dll
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/obj/Debug/net7.0/AOC2024.pdb
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/obj/Debug/net7.0/AOC2024.genruntimeconfig.cache
+/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/obj/Debug/net7.0/ref/AOC2024.dll
