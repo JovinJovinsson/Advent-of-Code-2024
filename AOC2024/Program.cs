@@ -38,10 +38,25 @@ for (int i = 0; i < files.Length; i++)
     lists[i].Sort();
 }
 
+if (lists[0].Count != lists[1].Count) { Console.WriteLine("List length mismatch!"); }
+
+List<int> distances = new List<int>();
+int totalDistance = 0;
+
+for (int i = 0; i < lists[0].Count; i ++)
+{
+    int currentDistance = (int)MathF.Abs(lists[0][i] - lists[1][i]);
+
+    distances.Add(currentDistance);
+
+    totalDistance += currentDistance;
+}
+
 
 // Debug outputs
 Console.WriteLine("List One: " + lists[0].Count);
 Console.WriteLine("List Two: " + lists[1].Count);
+Console.WriteLine("Total Distance: " + totalDistance);
 Console.WriteLine("-------");
 string listOne = "List One: ";
 foreach (int item in lists[0])
@@ -56,3 +71,10 @@ foreach (int item in lists[1])
     listTwo = listTwo + item + ", ";
 }
 Console.WriteLine(listTwo);
+Console.WriteLine("-------");
+string distancesList = "Distances: ";
+foreach (int item in distances)
+{
+    distancesList = distancesList + item + ", ";
+}
+Console.WriteLine(distancesList);
