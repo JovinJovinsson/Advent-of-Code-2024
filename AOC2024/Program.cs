@@ -38,17 +38,27 @@ for (int i = 0; i < files.Length; i++)
     lists[i].Sort();
 }
 
+// Quick validity check to make sure we can troubleshoot a problem
 if (lists[0].Count != lists[1].Count) { Console.WriteLine("List length mismatch!"); }
 
+// List of distances so we can keep track of our data points
 List<int> distances = new List<int>();
+// The total distance between the sorted list values
 int totalDistance = 0;
 
+// List of counts that an item in list 1 appears in list 2
+List<int> similarityScores = new List<int>();
+// The total multiplication of this count of this item in list 1 found in list 2
+int totalSimilarity = 0;
+
+// Iterate over all items in list 1
 for (int i = 0; i < lists[0].Count; i ++)
 {
+    // Calculate the distance
     int currentDistance = (int)MathF.Abs(lists[0][i] - lists[1][i]);
-
+    // Add it to our list of distances
     distances.Add(currentDistance);
-
+    // Also add it to the running total distance
     totalDistance += currentDistance;
 }
 
