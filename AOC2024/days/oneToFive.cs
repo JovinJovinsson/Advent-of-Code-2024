@@ -166,23 +166,23 @@ public class OneToFive
 
         foreach(List<int> report in reports)
         {
-            bool isIncreasing = report[0] - report[1] > 0 ? true : false;
-            bool isSafeReport = true;
+            // bool isIncreasing = report[0] - report[1] > 0 ? true : false;
+            bool isSafeReport = CheckLevelSafety(report);
 
-            for (int i = 1; i < report.Count; i++)
-            {
-                int absoluteDifference = (int)MathF.Abs(report[i - 1] - report[i]);
-                bool isSafeDifference = absoluteDifference >= 1 && absoluteDifference <= 3 ? true : false;
+            // for (int i = 1; i < report.Count; i++)
+            // {
+            //     int absoluteDifference = (int)MathF.Abs(report[i - 1] - report[i]);
+            //     bool isSafeDifference = absoluteDifference >= 1 && absoluteDifference <= 3 ? true : false;
 
-                if ((report[i - 1] - report[i] < 0 && !isIncreasing && isSafeDifference) || (report[i - 1] - report[i] > 0 && isIncreasing && isSafeDifference))
-                {
-                }
-                else
-                {
-                    isSafeReport = false;
-                    break;
-                }
-            }
+            //     if ((report[i - 1] - report[i] < 0 && !isIncreasing && isSafeDifference) || (report[i - 1] - report[i] > 0 && isIncreasing && isSafeDifference))
+            //     {
+            //     }
+            //     else
+            //     {
+            //         isSafeReport = false;
+            //         break;
+            //     }
+            // }
 
             safeReports.Add(isSafeReport);
             
@@ -191,6 +191,27 @@ public class OneToFive
 
         Console.WriteLine("Count of Reports: " + reports.Count);
         Console.WriteLine("Count of Safe Reports: " + countOfSafeReports);
+    }
+
+    private bool CheckLevelSafety(List<int> report)
+    {
+        bool isIncreasing = report[0] - report[1] > 0 ? true : false;
+
+        for (int i = 1; i < report.Count; i++)
+        {
+            int absoluteDifference = (int)MathF.Abs(report[i - 1] - report[i]);
+            bool isSafeDifference = absoluteDifference >= 1 && absoluteDifference <= 3 ? true : false;
+
+            if ((report[i - 1] - report[i] < 0 && !isIncreasing && isSafeDifference) || (report[i - 1] - report[i] > 0 && isIncreasing && isSafeDifference))
+            {
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 
