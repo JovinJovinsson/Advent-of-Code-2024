@@ -161,7 +161,36 @@ public class OneToFive
             }
         }
 
+        List<bool> safeReports = new List<bool>();
+        int countOfSafeReports = 0;
+
+        foreach(List<int> report in reports)
+        {
+            bool isIncreasing = report[0] - report[1] > 0 ? true : false;
+            bool isSafeReport = true;
+
+            for (int i = 1; i < report.Count; i++)
+            {
+                int absoluteDifference = (int)MathF.Abs(report[i - 1] - report[i]);
+                bool isSafeDifference = absoluteDifference >= 1 && absoluteDifference <= 3 ? true : false;
+
+                if ((report[i - 1] - report[i] < 0 && !isIncreasing && isSafeDifference) || (report[i - 1] - report[i] > 0 && isIncreasing && isSafeDifference))
+                {
+                }
+                else
+                {
+                    isSafeReport = false;
+                    break;
+                }
+            }
+
+            safeReports.Add(isSafeReport);
+            
+            if (isSafeReport) { countOfSafeReports++; }
+        }
+
         Console.WriteLine("Count of Reports: " + reports.Count);
+        Console.WriteLine("Count of Safe Reports: " + countOfSafeReports);
     }
 }
 
