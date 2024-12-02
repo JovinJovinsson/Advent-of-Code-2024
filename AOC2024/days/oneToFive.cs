@@ -1,9 +1,15 @@
 using System;
+using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Reflection.Metadata.Ecma335;
 using Microsoft.VisualBasic.FileIO;
 
 public class OneToFive
 {
+    /// <summary>
+    /// Solves the Day One portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/1
+    /// </summary>
     public void DayOne()
     {
         // The input files
@@ -126,6 +132,11 @@ public class OneToFive
         Console.WriteLine(distancesList);
     }
 
+    /// <summary>
+    /// Solves the Day Two portion of the AOC 2024 challenge.
+    /// Also uses <c>CheckReportSafety</c>
+    /// https://adventofcode.com/2024/day/2
+    /// </summary>
     public void DayTwo()
     {
         // The input files
@@ -161,31 +172,43 @@ public class OneToFive
             }
         }
 
-        List<bool> safeReports = new List<bool>();
+        // Create a List to store the results of our checks
+        List<bool> reportSafety = new List<bool>();
+        // Create a count of the safe reports
         int countOfSafeReports = 0;
 
+        // Iterate over each report
         foreach(List<int> report in reports)
         {
-            // bool isIncreasing = report[0] - report[1] > 0 ? true : false;
+            // Bool which is re-instantiated for each report and set on checking the level safety
             bool isSafeReport = CheckLevelSafety(report);
 
-            // for (int i = 1; i < report.Count; i++)
-            // {
-            //     int absoluteDifference = (int)MathF.Abs(report[i - 1] - report[i]);
-            //     bool isSafeDifference = absoluteDifference >= 1 && absoluteDifference <= 3 ? true : false;
+            // Part two enabled a dampener, so if it's not safe, let's re-check by checking if we remove
+            // one level would it be safe
+            if (!isSafeReport)
+            {
+                // We iterate over the report for each level, using the index i, we remove
+                // that particular level from the report and re-check, if it's safe, we move on
+                for (int i = 0; i < report.Count; i++)
+                {
+                    // Temporary list so we aren't damaging source data
+                    List<int> dampenedReport = report.ToList();
+                    // Remove the level in question to enable a re-test
+                    dampenedReport.RemoveAt(i);
 
-            //     if ((report[i - 1] - report[i] < 0 && !isIncreasing && isSafeDifference) || (report[i - 1] - report[i] > 0 && isIncreasing && isSafeDifference))
-            //     {
-            //     }
-            //     else
-            //     {
-            //         isSafeReport = false;
-            //         break;
-            //     }
-            // }
+                    // Run our CheckLevelSafety with the modified report
+                    if (CheckLevelSafety(dampenedReport))
+                    {
+                        // If it's safe, let's skip all further processing and re-mark it as safe
+                        isSafeReport = true;
+                        break;
+                    }
+                }
+            }
 
-            safeReports.Add(isSafeReport);
-            
+            // Add the result to our list
+            reportSafety.Add(isSafeReport);
+            // If it was safe, increment out counter
             if (isSafeReport) { countOfSafeReports++; }
         }
 
@@ -193,24 +216,40 @@ public class OneToFive
         Console.WriteLine("Count of Safe Reports: " + countOfSafeReports);
     }
 
+    /// <summary>
+    /// This checks the safey of a given report based on the criteria of:
+    /// - All levels must be either increasing or decreasing
+    /// - All levels must not have a difference less than 1 or more than 3
+    /// </summary>
+    /// <param name="report"></param>
+    /// <returns></returns>
     private bool CheckLevelSafety(List<int> report)
     {
-        bool isIncreasing = report[0] - report[1] > 0 ? true : false;
+        // Find the difference of the 1st & 2nd level
+        int firstDifference = report[0] - report[1];
 
+        // If it doesn't increase or decrease, it's unsafe
+        if (firstDifference == 0) { return false; }
+
+        // Establish whether the report is increasing or decreasing for checking each level
+        bool isIncreasing = firstDifference > 0 ? true : false;
+
+        // Iterate over all the levels to check it matches the criteria
         for (int i = 1; i < report.Count; i++)
         {
-            int absoluteDifference = (int)MathF.Abs(report[i - 1] - report[i]);
-            bool isSafeDifference = absoluteDifference >= 1 && absoluteDifference <= 3 ? true : false;
+            // Find the difference between the previous and current level
+            int levelDifference = report[i - 1] - report[i];
 
-            if ((report[i - 1] - report[i] < 0 && !isIncreasing && isSafeDifference) || (report[i - 1] - report[i] > 0 && isIncreasing && isSafeDifference))
-            {
-            }
-            else
-            {
-                return false;
-            }
+            // If this level difference is 0, or is trending opposite, it's unsafe
+            if (levelDifference == 0 || levelDifference > 0 && !isIncreasing || levelDifference < 0 && isIncreasing) { return false; }
+
+            // Also identify the absolute difference
+            int absoluteDifference = (int)MathF.Abs(levelDifference);
+            // If the absolute difference is less than 1 or more than 3, it's unsafe
+            if (absoluteDifference < 1 || absoluteDifference > 3) { return false; }
         }
 
+        // The report made it here, so it's safe
         return true;
     }
 }
