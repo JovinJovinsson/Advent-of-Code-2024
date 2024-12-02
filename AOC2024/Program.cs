@@ -51,6 +51,22 @@ List<int> similarityScores = new List<int>();
 // The total multiplication of this count of this item in list 1 found in list 2
 int totalSimilarity = 0;
 
+// Group the items by the unique values
+var groupedItems = lists[1].GroupBy(j => j).ToList();
+// Lists to make it super easy to access further down the line
+List<int> groupOrder = new List<int>();
+List<int> groupCounts = new List<int>();
+
+// Iterate over the grouped items
+foreach (var group in groupedItems)
+{
+    // Store the unique value from the list here, we can 
+    // then get the index and retrieve the count in the second list
+    groupOrder.Add(group.Key);
+    // Store the count in this other list
+    groupCounts.Add(group.Count());
+}
+
 // Iterate over all items in list 1
 for (int i = 0; i < lists[0].Count; i ++)
 {
@@ -60,6 +76,17 @@ for (int i = 0; i < lists[0].Count; i ++)
     distances.Add(currentDistance);
     // Also add it to the running total distance
     totalDistance += currentDistance;
+
+    // Check that this value exists in our grouped list
+    if (groupOrder.Contains(lists[0][i]))
+    {
+        // It does, so now lets get the value from the counts list
+        int similarityForItem = groupCounts.ElementAt(groupOrder.IndexOf(lists[0][i]));
+        // Add the similarity to our similarity list (just in case)
+        similarityScores.Add(lists[0][i] * similarityForItem);
+        // Addd it to the cumulative similarity too
+        totalSimilarity += (lists[0][i] * similarityForItem);
+    }
 }
 
 
@@ -67,6 +94,10 @@ for (int i = 0; i < lists[0].Count; i ++)
 Console.WriteLine("List One: " + lists[0].Count);
 Console.WriteLine("List Two: " + lists[1].Count);
 Console.WriteLine("Total Distance: " + totalDistance);
+Console.WriteLine("-------");
+Console.WriteLine("Groups: " + groupOrder.Count);
+Console.WriteLine("Group Counts: " + groupCounts.Count);
+Console.WriteLine("Total Similarity: " + totalSimilarity);
 Console.WriteLine("-------");
 string listOne = "List One: ";
 foreach (int item in lists[0])
