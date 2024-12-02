@@ -6,8 +6,8 @@ public class OneToFive
 {
     public void DayOne()
     {
-        // The input fields
-        string[] files = {"./assets/AOC2024.1.Input-1.csv", "assets/AOC2024.1.Input-2.csv" };
+        // The input files
+        string[] files = {"assets/AOC2024.1.Input-1.csv", "assets/AOC2024.1.Input-2.csv" };
 
         // List of lists of ints to use for storage
         List<List<int>> lists = new List<List<int>>();
@@ -124,6 +124,44 @@ public class OneToFive
             distancesList = distancesList + item + ", ";
         }
         Console.WriteLine(distancesList);
+    }
+
+    public void DayTwo()
+    {
+        // The input files
+        string fileName = "assets/AOC2024.2.Input.txt";
+
+        // List of lists where each sub-List is a report containing a list of ints (levels)
+        List<List<int>> reports = new List<List<int>>();
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                // Split the current line into separate values, delimited with space
+                string[] levelsStrings = currentLine.Split(' ');
+                // Create a placeholder list to store the int parsed values
+                List<int> levels = new List<int>();
+
+                // Iterate over each value to add it to the list
+                foreach (string level in levelsStrings)
+                {
+                    // Convert it to an int
+                    int fieldInt = Int32.Parse(level);
+                    // Add the int to the relevant list (i)
+                    levels.Add(fieldInt);
+                }
+
+                // Add the report to the list of reports
+                reports.Add(levels);
+            }
+        }
+
+        Console.WriteLine("Count of Reports: " + reports.Count);
     }
 }
 

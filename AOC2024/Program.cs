@@ -1,3 +1,4 @@
 ﻿OneToFive oneToFive = new OneToFive();
 
-oneToFive.DayOne();
+// oneToFive.DayOne();
+oneToFive.DayTwo();
