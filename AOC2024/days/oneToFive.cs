@@ -252,5 +252,10 @@ public class OneToFive
         // The report made it here, so it's safe
         return true;
     }
+
+    public void DayThree()
+    {
+        
+    }
 }
 
