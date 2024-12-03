@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Reflection.Metadata.Ecma335;
 using Microsoft.VisualBasic.FileIO;
+using System.Text.RegularExpressions;
 
 public class OneToFive
 {
@@ -255,7 +256,72 @@ public class OneToFive
 
     public void DayThree()
     {
-        
+        // The input file
+        string fileName = "assets/AOC2024.3.Input.txt";
+
+        // List of strings of the muls (e.g. mul(X,Y))
+        List<string> muls = new List<string>();
+
+        // List of List of ints for the inidividual pairs of X,Y values
+        List<List<int>> mulPairs = new List<List<int>>();
+
+        // The total of the pairs multiplied
+        int multiplicationTotal = 0;
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Create the mul(X,Y) regex pattern
+            string regexPattern = @"mul\(([0-9]{1,3},[0-9]{1,3})\)";
+            // Create the regex object for this pattern
+            Regex regex = new Regex(regexPattern);
+            // Create the number matching pattern to run on the matched mul(X,Y)
+            string numberPattern = @"[0-9]{1,3}";
+            // Create the regex object for the number pattern
+            Regex numberRegex = new Regex(numberPattern);
+
+            // Placeholder for the current line of the tile
+            string currentLine;
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                // Find all the mul(X,Y) matches with only 1-3 numbers
+                MatchCollection matches = regex.Matches(currentLine);
+
+                // Iterate over every match
+                for (int i = 0; i < matches.Count; i++)
+                {
+                    // Add the matched string to our list
+                    muls.Add(matches[i].Value);
+
+                    // Find all the numbers only in the current pair (should only be 2)
+                    MatchCollection numbers = numberRegex.Matches(matches[i].Value);
+                    // Create a holding list for the int pair
+                    List<int> mulPair = new List<int>();
+
+                    // Get each number, parse it to an Int32 and add it to the holding pair
+                    for (int j = 0; j < numbers.Count; j++)
+                    {
+                        mulPair.Add(Int32.Parse(numbers[j].Value));
+                    }
+
+                    // Add this pair to the list of all pairs
+                    mulPairs.Add(mulPair);
+
+                    // Multiply the pair and add it to the running total
+                    multiplicationTotal += (mulPair[0] * mulPair[1]);
+                }
+            }
+        }
+
+        Console.WriteLine("Multiplication Total: " + multiplicationTotal);
+        Console.WriteLine("-----");
+
+        for (int i = 0; i < muls.Count; i++)
+        {
+            Console.WriteLine("Mul #" + i + ": " + muls[i]);
+            Console.WriteLine("Mul #" + i + ": X=" + mulPairs[i][0] + " | Y=" + mulPairs[i][1]);
+        }
     }
 }
 
