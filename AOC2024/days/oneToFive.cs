@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Reflection.Metadata.Ecma335;
 using Microsoft.VisualBasic.FileIO;
 using System.Text.RegularExpressions;
+using System.Diagnostics.Metrics;
 
 public class OneToFive
 {
@@ -271,14 +272,17 @@ public class OneToFive
         // Read the data in from the text file
         using (StreamReader streamReader = new StreamReader(fileName))
         {
-            // Create the mul(X,Y) regex pattern
-            string regexPattern = @"mul\(([0-9]{1,3},[0-9]{1,3})\)";
+            // This regex pattern now looks for don't, do or mul(X,Y) so we can
+            // flip a flag and get the correct answer
+            string regexPattern = @"(don't|do|mul\(([0-9]{1,3},[0-9]{1,3})\))";
             // Create the regex object for this pattern
             Regex regex = new Regex(regexPattern);
-            // Create the number matching pattern to run on the matched mul(X,Y)
-            string numberPattern = @"[0-9]{1,3}";
-            // Create the regex object for the number pattern
-            Regex numberRegex = new Regex(numberPattern);
+
+            // Boolean flag that will go to true when "don't" is found, and false when "do"
+            // this will allow us to ignore anything that shouldn't be mulled.
+            // Default is "false" as any instructions before the first do or don't are
+            // considered a "do"
+            bool ignoreMuls = false;
 
             // Placeholder for the current line of the tile
             string currentLine;
@@ -291,25 +295,45 @@ public class OneToFive
                 // Iterate over every match
                 for (int i = 0; i < matches.Count; i++)
                 {
-                    // Add the matched string to our list
-                    muls.Add(matches[i].Value);
-
-                    // Find all the numbers only in the current pair (should only be 2)
-                    MatchCollection numbers = numberRegex.Matches(matches[i].Value);
-                    // Create a holding list for the int pair
-                    List<int> mulPair = new List<int>();
-
-                    // Get each number, parse it to an Int32 and add it to the holding pair
-                    for (int j = 0; j < numbers.Count; j++)
+                    // If we found a "do" 
+                    if (matches[i].Value == "do")
                     {
-                        mulPair.Add(Int32.Parse(numbers[j].Value));
+                        // Make sure we don't ignore instructions
+                        ignoreMuls = false;
                     }
+                    // We found a "dont'"
+                    else if (matches[i].Value == "don't")
+                    {
+                        // Ignore any further instructions until the next "do"
+                        ignoreMuls = true;
+                    }
+                    else if (!ignoreMuls)
+                    {
+                        // Create the number matching pattern to run on the matched mul(X,Y)
+                        string numberPattern = @"[0-9]{1,3}";
+                        // Create the regex object for the number pattern
+                        Regex numberRegex = new Regex(numberPattern);
 
-                    // Add this pair to the list of all pairs
-                    mulPairs.Add(mulPair);
+                        // Add the matched string to our list
+                        muls.Add(matches[i].Value);
 
-                    // Multiply the pair and add it to the running total
-                    multiplicationTotal += (mulPair[0] * mulPair[1]);
+                        // Find all the numbers only in the current pair (should only be 2)
+                        MatchCollection numbers = numberRegex.Matches(matches[i].Value);
+                        // Create a holding list for the int pair
+                        List<int> mulPair = new List<int>();
+
+                        // Get each number, parse it to an Int32 and add it to the holding pair
+                        for (int j = 0; j < numbers.Count; j++)
+                        {
+                            mulPair.Add(Int32.Parse(numbers[j].Value));
+                        }
+
+                        // Add this pair to the list of all pairs
+                        mulPairs.Add(mulPair);
+
+                        // Multiply the pair and add it to the running total
+                        multiplicationTotal += (mulPair[0] * mulPair[1]);
+                    }
                 }
             }
         }
