@@ -255,6 +255,10 @@ public class OneToFive
         return true;
     }
 
+    /// <summary>
+    /// Solves the Day Two portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/3
+    /// </summary>
     public void DayThree()
     {
         // The input file
@@ -348,6 +352,11 @@ public class OneToFive
         }
     }
 
+    /// <summary>
+    /// Solves the Day Two portion of the AOC 2024 challenge.
+    /// Also uses <c>CountWithRegex</c>, <c>BuildSearchStringForRegex</c>, <c>BuildXMAS</c>
+    /// https://adventofcode.com/2024/day/4
+    /// </summary>
     public void DayFour()
     {
         // The input file
@@ -362,21 +371,12 @@ public class OneToFive
         // Read the data in from the text file
         using (StreamReader streamReader = new StreamReader(fileName))
         {
-            // TO DO:
-            // - regex for XMAS
-            // - regex for SAMX
-            // - If found X search vertically (up-down), diagonally
-
-            // This regex pattern now looks for don't, do or mul(X,Y) so we can
-            // flip a flag and get the correct answer
-            string regexPattern = @"(XMAS|SAMX)";
-
             // Placeholder for the current line of the tile
             string currentLine;
             // currentLine will be null when the StreamReader reaches the end of file
             while((currentLine = streamReader.ReadLine()) != null)
             {
-                counter += CountWithRegex(regexPattern, currentLine);
+                counter += CountWithRegex(currentLine);
 
                 List<char> lineChars = currentLine.ToCharArray().ToList();
 
@@ -385,15 +385,29 @@ public class OneToFive
 
             for (int i = 0; i < data.Count; i++)
             {
-                
+                for (int j = 0; j < data[i].Count; j++)
+                {
+                    if (data[i][j] == 'X')
+                    {
+                        bool canGoUp = i >= 3 ? true : false;
+                        bool canGoLeft = j >= 3 ? true : false;
+                        bool canGoDown = (i + 3) < data.Count ? true : false;
+                        bool canGoRight = (j + 3) < data[i].Count ? true : false;
+
+                        counter += BuildSearchStringForRegex(ref data, i, j, canGoUp, canGoLeft, canGoDown, canGoRight);
+                    }
+                }
             }
         }
 
         Console.WriteLine("Regex Matches: " + counter);
     }
 
-    private int CountWithRegex(string regexPattern, string text)
+    private int CountWithRegex(string text)
     {
+        // This regex pattern now looks for don't, do or mul(X,Y) so we can
+        // flip a flag and get the correct answer
+        string regexPattern = @"(XMAS|SAMX)";
         // Create the regex object for this pattern
         Regex regex = new Regex(regexPattern);
 
@@ -402,6 +416,65 @@ public class OneToFive
 
         // Return the count of matches
         return matches.Count;
+    }
+
+    private int BuildSearchStringForRegex(ref List<List<char>> data, int i, int j, bool canGoUp, bool canGoLeft, bool canGoDown, bool canGoRight)
+    {
+        string regexString = "";
+
+        if (canGoUp)
+        {
+            regexString += BuildXMAS(ref data, i, j, -1, 0);
+            Console.WriteLine("(" + i + ", " + j + ") Up: " + regexString);
+
+            if (canGoLeft)
+            {
+                regexString += "," + BuildXMAS(ref data, i, j, -1, -1);
+                Console.WriteLine("(" + i + ", " + j + ") Up-Left: " + regexString);
+            }
+
+            if (canGoRight)
+            {
+                regexString += "," + BuildXMAS(ref data, i, j, -1, 1);
+                Console.WriteLine("(" + i + ", " + j + ") Up-Right: " + regexString);
+            }
+        }
+
+        if (canGoDown)
+        {
+            regexString += "," + BuildXMAS(ref data, i, j, 1, 0);
+            Console.WriteLine("(" + i + ", " + j + ") Down: " + regexString);
+
+            if (canGoLeft)
+            {
+                regexString += "," + BuildXMAS(ref data, i, j, 1, -1);
+                Console.WriteLine("(" + i + ", " + j + ") Down-Left: " + regexString);
+            }
+
+            if (canGoRight)
+            {
+                regexString += "," + BuildXMAS(ref data, i, j, 1, 1);
+                Console.WriteLine("(" + i + ", " + j + ") Down-Right: " + regexString);
+            }
+        }
+
+        int count = CountWithRegex(regexString);
+
+        Console.WriteLine("(" + i + ", " + j + ") Count: " + count);
+
+        return count;
+    }
+
+    private string BuildXMAS(ref List<List<char>> data, int i, int j, int iMod, int jMod)
+    {
+        string xmas = "" + data[i][j];
+
+        for (int x = 1; x < 4; x++)
+        {
+            xmas += data[i + (x * iMod)][j + (x * jMod)];
+        }
+
+        return xmas;
     }
 }
 
