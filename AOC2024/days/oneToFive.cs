@@ -347,5 +347,61 @@ public class OneToFive
             Console.WriteLine("Mul #" + i + ": X=" + mulPairs[i][0] + " | Y=" + mulPairs[i][1]);
         }
     }
+
+    public void DayFour()
+    {
+        // The input file
+        string fileName = "assets/AOC2024.4.Input.txt";
+
+        // List of List of Chars to allow for 2D searching
+        List<List<char>> data = new List<List<char>>();
+
+        // Counter of the number of XMAS found
+        int counter = 0;
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // TO DO:
+            // - regex for XMAS
+            // - regex for SAMX
+            // - If found X search vertically (up-down), diagonally
+
+            // This regex pattern now looks for don't, do or mul(X,Y) so we can
+            // flip a flag and get the correct answer
+            string regexPattern = @"(XMAS|SAMX)";
+
+            // Placeholder for the current line of the tile
+            string currentLine;
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                counter += CountWithRegex(regexPattern, currentLine);
+
+                List<char> lineChars = currentLine.ToCharArray().ToList();
+
+                data.Add(lineChars);
+            }
+
+            for (int i = 0; i < data.Count; i++)
+            {
+                
+            }
+        }
+
+        Console.WriteLine("Regex Matches: " + counter);
+    }
+
+    private int CountWithRegex(string regexPattern, string text)
+    {
+        // Create the regex object for this pattern
+        Regex regex = new Regex(regexPattern);
+
+        // Find all the mul(X,Y) matches with only 1-3 numbers
+        MatchCollection matches = regex.Matches(text);
+
+        // Return the count of matches
+        return matches.Count;
+    }
 }
 
