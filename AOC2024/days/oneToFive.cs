@@ -5,6 +5,7 @@ using System.Reflection.Metadata.Ecma335;
 using Microsoft.VisualBasic.FileIO;
 using System.Text.RegularExpressions;
 using System.Diagnostics.Metrics;
+using System.Runtime.CompilerServices;
 
 public class OneToFive
 {
@@ -255,6 +256,10 @@ public class OneToFive
         return true;
     }
 
+    /// <summary>
+    /// Solves the Day Two portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/3
+    /// </summary>
     public void DayThree()
     {
         // The input file
@@ -347,5 +352,189 @@ public class OneToFive
             Console.WriteLine("Mul #" + i + ": X=" + mulPairs[i][0] + " | Y=" + mulPairs[i][1]);
         }
     }
-}
 
+    /// <summary>
+    /// Solves the Day Two portion of the AOC 2024 challenge.
+    /// Also uses <c>CountWithRegex</c>, <c>BuildSearchStringForRegex</c>, <c>BuildXMAS</c>
+    /// https://adventofcode.com/2024/day/4
+    /// </summary>
+    public void DayFour()
+    {
+        // The input file
+        string fileName = "assets/AOC2024.4.Input.txt";
+
+        // List of List of Chars to allow for 2D searching
+        List<List<char>> data = new List<List<char>>();
+
+        // Counter of the number of XMAS found
+        int counter = 0;
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                // Add all matches found in the line for XMAS or SAMX
+                // Not needed for Part Two
+                //counter += CountWithRegex(currentLine);
+
+                // Create a list of chars and add the string to the list
+                List<char> lineChars = currentLine.ToCharArray().ToList();
+                // Store this in the master list of lists
+                data.Add(lineChars);
+            }
+
+            // Iterate over each List<char> in the List
+            for (int i = 1; i < data.Count; i++)
+            {
+                // Iterate over each char in the sub-List
+                for (int j = 1; j < data[i].Count; j++)
+                {
+                    // If the char is 'A' let's walk around the matrix and find our 3-letter words
+                    if (data[i][j] == 'A' && ((i + 1 < data.Count) && (j + 1 < data[i].Count)))
+                    {
+                        // All valid arrangements for the letters for the X shaped MAS
+                        List<string> validWrappers = new string[] {"MMSS", "SSMM", "MSMS", "SMSM"}.ToList();
+                        
+                        // Build out the arrangement
+                        string isXMAS = "" + data[i - 1][j - 1] + data[i - 1][j + 1] + data[i + 1][j - 1] + data[i + 1][j + 1];
+
+                        // Check if we have a valid arrangement
+                        if (validWrappers.Contains(isXMAS))
+                        {
+                            // Increment the counter
+                            counter++;
+                        }
+
+                        // Add all matches found to our running total
+                        // counter += BuildSearchStringForRegex(ref data, i, j);
+                    }
+                }
+            }
+        }
+
+        Console.WriteLine("Regex Matches: " + counter);
+    }
+
+    /// <summary>
+    /// Finds all matches in a string for the pattern specified in the function
+    /// </summary>
+    /// <param name="text">The string to search in</param>
+    /// <returns>The <c>int</c> count of matches</returns>
+    private int CountWithRegex(string text)
+    {
+        // This regex pattern now looks for don't, do or mul(X,Y) so we can
+        // flip a flag and get the correct answer
+        string regexPattern = @"(?=(MAS|SAM))";
+        // Create the regex object for this pattern
+        Regex regex = new Regex(regexPattern);
+
+        // Find all of the pattern
+        MatchCollection matches = regex.Matches(text);
+
+        // Return the count of matches
+        return matches.Count;
+    }
+
+    /// <summary>
+    /// Using the i,j coordinates of the 'X' found, walk in the 6 up/down directions and
+    /// build strings of 4 characters. Following this, call <c>CountWithRegex</c> on the
+    /// built string.
+    /// </summary>
+    /// <param name="data">The matrix from the main function</param>
+    /// <param name="i">The List we're on</param>
+    /// <param name="j">The char we're on in the list</param>
+    /// <returns>The <c>int</c> count of matches</returns>
+    private int BuildSearchStringForRegex(ref List<List<char>> data, int i, int j)
+    {
+        // Check that we are not too close to any of the edges of the matrix
+        bool canGoUp = i >= 3 ? true : false;
+        bool canGoLeft = j >= 3 ? true : false;
+        bool canGoDown = (i + 3) < data.Count ? true : false;
+        bool canGoRight = (j + 3) < data[i].Count ? true : false;
+
+        // Our placeholder we'll regex later
+        string regexString = "";
+
+        // We're on at least line 4 of the matrix, which allows for XMAS to be written upwards
+        if (canGoUp)
+        {
+            // Walk directly up the earlier lists
+            regexString += BuildXMAS(ref data, i, j, -1, 0);
+            Console.WriteLine("(" + i + ", " + j + ") Up: " + regexString);
+
+            // We're on at least column 4 of the current list, which allows for SAMX to be written to the upward-left
+            if (canGoLeft)
+            {
+                // Walk up 1 and left 1 to build SAMX
+                regexString += "," + BuildXMAS(ref data, i, j, -1, -1);
+                Console.WriteLine("(" + i + ", " + j + ") Up-Left: " + regexString);
+            }
+
+            // We have at least 3 more columns after this one so we can spell XMAS to the up-right
+            if (canGoRight)
+            {
+                // Walk up 1 and right 1 to build XMAS
+                regexString += "," + BuildXMAS(ref data, i, j, -1, 1);
+                Console.WriteLine("(" + i + ", " + j + ") Up-Right: " + regexString);
+            }
+        }
+
+        // Same logic as canGoUp, but downwards
+        if (canGoDown)
+        {
+            regexString += "," + BuildXMAS(ref data, i, j, 1, 0);
+            Console.WriteLine("(" + i + ", " + j + ") Down: " + regexString);
+
+            if (canGoLeft)
+            {
+                regexString += "," + BuildXMAS(ref data, i, j, 1, -1);
+                Console.WriteLine("(" + i + ", " + j + ") Down-Left: " + regexString);
+            }
+
+            if (canGoRight)
+            {
+                regexString += "," + BuildXMAS(ref data, i, j, 1, 1);
+                Console.WriteLine("(" + i + ", " + j + ") Down-Right: " + regexString);
+            }
+        }
+
+        // Run our string through the regex match, we separate each with a "," so we don't get false matches
+        int count = CountWithRegex(regexString);
+
+        Console.WriteLine("(" + i + ", " + j + ") Count: " + count);
+
+        return count;
+    }
+
+    /// <summary>
+    /// Walks along the matrix with the given modifiers for the i and j cooridnates
+    /// </summary>
+    /// <param name="data">The matrix of data</param>
+    /// <param name="i">The current line in the matrix</param>
+    /// <param name="j">The current char in the line</param>
+    /// <param name="iMod">Moves up the matrix with -1 and down with 1</param>
+    /// <param name="jMod">Moves left in the line with -1 and right with 1</param>
+    /// <returns>The int count of matches</returns>
+    private string BuildXMAS(ref List<List<char>> data, int i, int j, int iMod, int jMod)
+    {
+        // Take the first "X"
+        string xmas = "" + data[i][j];
+
+        // Iterate 3 times walking up/down and left/right on the matrix
+        for (int x = 1; x < 4; x++)
+        {
+            // Will add or subtract between 1 and 3 from the i or j value
+            int modI = i + (x * iMod);
+            int modJ = j + (x * jMod);
+
+            // Grab the char at the specified coordinates in the matrix
+            xmas += data[modI][modJ];
+        }
+
+        return xmas;
+    }
+}
