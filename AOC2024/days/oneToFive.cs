@@ -3,6 +3,8 @@ using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Reflection.Metadata.Ecma335;
 using Microsoft.VisualBasic.FileIO;
+using System.Text.RegularExpressions;
+using System.Diagnostics.Metrics;
 
 public class OneToFive
 {
@@ -251,6 +253,99 @@ public class OneToFive
 
         // The report made it here, so it's safe
         return true;
+    }
+
+    public void DayThree()
+    {
+        // The input file
+        string fileName = "assets/AOC2024.3.Input.txt";
+
+        // List of strings of the muls (e.g. mul(X,Y))
+        List<string> muls = new List<string>();
+
+        // List of List of ints for the inidividual pairs of X,Y values
+        List<List<int>> mulPairs = new List<List<int>>();
+
+        // The total of the pairs multiplied
+        int multiplicationTotal = 0;
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // This regex pattern now looks for don't, do or mul(X,Y) so we can
+            // flip a flag and get the correct answer
+            string regexPattern = @"(don't|do|mul\(([0-9]{1,3},[0-9]{1,3})\))";
+            // Create the regex object for this pattern
+            Regex regex = new Regex(regexPattern);
+
+            // Boolean flag that will go to true when "don't" is found, and false when "do"
+            // this will allow us to ignore anything that shouldn't be mulled.
+            // Default is "false" as any instructions before the first do or don't are
+            // considered a "do"
+            bool ignoreMuls = false;
+
+            // Placeholder for the current line of the tile
+            string currentLine;
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                // Find all the mul(X,Y) matches with only 1-3 numbers
+                MatchCollection matches = regex.Matches(currentLine);
+
+                // Iterate over every match
+                for (int i = 0; i < matches.Count; i++)
+                {
+                    // If we found a "do" 
+                    if (matches[i].Value == "do")
+                    {
+                        // Make sure we don't ignore instructions
+                        ignoreMuls = false;
+                    }
+                    // We found a "dont'"
+                    else if (matches[i].Value == "don't")
+                    {
+                        // Ignore any further instructions until the next "do"
+                        ignoreMuls = true;
+                    }
+                    else if (!ignoreMuls)
+                    {
+                        // Create the number matching pattern to run on the matched mul(X,Y)
+                        string numberPattern = @"[0-9]{1,3}";
+                        // Create the regex object for the number pattern
+                        Regex numberRegex = new Regex(numberPattern);
+
+                        // Add the matched string to our list
+                        muls.Add(matches[i].Value);
+
+                        // Find all the numbers only in the current pair (should only be 2)
+                        MatchCollection numbers = numberRegex.Matches(matches[i].Value);
+                        // Create a holding list for the int pair
+                        List<int> mulPair = new List<int>();
+
+                        // Get each number, parse it to an Int32 and add it to the holding pair
+                        for (int j = 0; j < numbers.Count; j++)
+                        {
+                            mulPair.Add(Int32.Parse(numbers[j].Value));
+                        }
+
+                        // Add this pair to the list of all pairs
+                        mulPairs.Add(mulPair);
+
+                        // Multiply the pair and add it to the running total
+                        multiplicationTotal += (mulPair[0] * mulPair[1]);
+                    }
+                }
+            }
+        }
+
+        Console.WriteLine("Multiplication Total: " + multiplicationTotal);
+        Console.WriteLine("-----");
+
+        for (int i = 0; i < muls.Count; i++)
+        {
+            Console.WriteLine("Mul #" + i + ": " + muls[i]);
+            Console.WriteLine("Mul #" + i + ": X=" + mulPairs[i][0] + " | Y=" + mulPairs[i][1]);
+        }
     }
 }
 
