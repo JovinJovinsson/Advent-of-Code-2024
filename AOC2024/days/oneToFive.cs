@@ -5,6 +5,7 @@ using System.Reflection.Metadata.Ecma335;
 using Microsoft.VisualBasic.FileIO;
 using System.Text.RegularExpressions;
 using System.Diagnostics.Metrics;
+using System.Runtime.CompilerServices;
 
 public class OneToFive
 {
@@ -376,25 +377,26 @@ public class OneToFive
             // currentLine will be null when the StreamReader reaches the end of file
             while((currentLine = streamReader.ReadLine()) != null)
             {
+                // Add all matches found in the line for XMAS or SAMX
                 counter += CountWithRegex(currentLine);
 
+                // Create a list of chars and add the string to the list
                 List<char> lineChars = currentLine.ToCharArray().ToList();
-
+                // Store this in the master list of lists
                 data.Add(lineChars);
             }
 
+            // Iterate over each List<char> in the List
             for (int i = 0; i < data.Count; i++)
             {
+                // Iterate over each char in the sub-List
                 for (int j = 0; j < data[i].Count; j++)
                 {
+                    // If the char is 'X' let's walk around the matrix and find our 4-letter words
                     if (data[i][j] == 'X')
                     {
-                        bool canGoUp = i >= 3 ? true : false;
-                        bool canGoLeft = j >= 3 ? true : false;
-                        bool canGoDown = (i + 3) < data.Count ? true : false;
-                        bool canGoRight = (j + 3) < data[i].Count ? true : false;
-
-                        counter += BuildSearchStringForRegex(ref data, i, j, canGoUp, canGoLeft, canGoDown, canGoRight);
+                        // Add all matches found to our running total
+                        counter += BuildSearchStringForRegex(ref data, i, j);
                     }
                 }
             }
@@ -403,11 +405,16 @@ public class OneToFive
         Console.WriteLine("Regex Matches: " + counter);
     }
 
+    /// <summary>
+    /// Finds all matches in a string for the pattern specified in the function
+    /// </summary>
+    /// <param name="text">The string to search in</param>
+    /// <returns>The <c>int</c> count of matches</returns>
     private int CountWithRegex(string text)
     {
         // This regex pattern now looks for don't, do or mul(X,Y) so we can
         // flip a flag and get the correct answer
-        string regexPattern = @"(XMAS|SAMX)";
+        string regexPattern = @"(?=(XMAS|SAMX))";
         // Create the regex object for this pattern
         Regex regex = new Regex(regexPattern);
 
@@ -418,28 +425,51 @@ public class OneToFive
         return matches.Count;
     }
 
-    private int BuildSearchStringForRegex(ref List<List<char>> data, int i, int j, bool canGoUp, bool canGoLeft, bool canGoDown, bool canGoRight)
+    /// <summary>
+    /// Using the i,j coordinates of the 'X' found, walk in the 6 up/down directions and
+    /// build strings of 4 characters. Following this, call <c>CountWithRegex</c> on the
+    /// built string.
+    /// </summary>
+    /// <param name="data">The matrix from the main function</param>
+    /// <param name="i">The List we're on</param>
+    /// <param name="j">The char we're on in the list</param>
+    /// <returns>The <c>int</c> count of matches</returns>
+    private int BuildSearchStringForRegex(ref List<List<char>> data, int i, int j)
     {
+        // Check that we are not too close to any of the edges of the matrix
+        bool canGoUp = i >= 3 ? true : false;
+        bool canGoLeft = j >= 3 ? true : false;
+        bool canGoDown = (i + 3) < data.Count ? true : false;
+        bool canGoRight = (j + 3) < data[i].Count ? true : false;
+
+        // Our placeholder we'll regex later
         string regexString = "";
 
+        // We're on at least line 4 of the matrix, which allows for XMAS to be written upwards
         if (canGoUp)
         {
+            // Walk directly up the earlier lists
             regexString += BuildXMAS(ref data, i, j, -1, 0);
             Console.WriteLine("(" + i + ", " + j + ") Up: " + regexString);
 
+            // We're on at least column 4 of the current list, which allows for SAMX to be written to the upward-left
             if (canGoLeft)
             {
+                // Walk up 1 and left 1 to build SAMX
                 regexString += "," + BuildXMAS(ref data, i, j, -1, -1);
                 Console.WriteLine("(" + i + ", " + j + ") Up-Left: " + regexString);
             }
 
+            // We have at least 3 more columns after this one so we can spell XMAS to the up-right
             if (canGoRight)
             {
+                // Walk up 1 and right 1 to build XMAS
                 regexString += "," + BuildXMAS(ref data, i, j, -1, 1);
                 Console.WriteLine("(" + i + ", " + j + ") Up-Right: " + regexString);
             }
         }
 
+        // Same logic as canGoUp, but downwards
         if (canGoDown)
         {
             regexString += "," + BuildXMAS(ref data, i, j, 1, 0);
@@ -458,6 +488,7 @@ public class OneToFive
             }
         }
 
+        // Run our string through the regex match, we separate each with a "," so we don't get false matches
         int count = CountWithRegex(regexString);
 
         Console.WriteLine("(" + i + ", " + j + ") Count: " + count);
@@ -465,13 +496,29 @@ public class OneToFive
         return count;
     }
 
+    /// <summary>
+    /// Walks along the matrix with the given modifiers for the i and j cooridnates
+    /// </summary>
+    /// <param name="data">The matrix of data</param>
+    /// <param name="i">The current line in the matrix</param>
+    /// <param name="j">The current char in the line</param>
+    /// <param name="iMod">Moves up the matrix with -1 and down with 1</param>
+    /// <param name="jMod">Moves left in the line with -1 and right with 1</param>
+    /// <returns>The int count of matches</returns>
     private string BuildXMAS(ref List<List<char>> data, int i, int j, int iMod, int jMod)
     {
+        // Take the first "X"
         string xmas = "" + data[i][j];
 
+        // Iterate 3 times walking up/down and left/right on the matrix
         for (int x = 1; x < 4; x++)
         {
-            xmas += data[i + (x * iMod)][j + (x * jMod)];
+            // Will add or subtract between 1 and 3 from the i or j value
+            int modI = i + (x * iMod);
+            int modJ = j + (x * jMod);
+
+            // Grab the char at the specified coordinates in the matrix
+            xmas += data[modI][modJ];
         }
 
         return xmas;
