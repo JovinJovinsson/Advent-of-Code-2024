@@ -378,7 +378,8 @@ public class OneToFive
             while((currentLine = streamReader.ReadLine()) != null)
             {
                 // Add all matches found in the line for XMAS or SAMX
-                counter += CountWithRegex(currentLine);
+                // Not needed for Part Two
+                //counter += CountWithRegex(currentLine);
 
                 // Create a list of chars and add the string to the list
                 List<char> lineChars = currentLine.ToCharArray().ToList();
@@ -387,16 +388,29 @@ public class OneToFive
             }
 
             // Iterate over each List<char> in the List
-            for (int i = 0; i < data.Count; i++)
+            for (int i = 1; i < data.Count; i++)
             {
                 // Iterate over each char in the sub-List
-                for (int j = 0; j < data[i].Count; j++)
+                for (int j = 1; j < data[i].Count; j++)
                 {
-                    // If the char is 'X' let's walk around the matrix and find our 4-letter words
-                    if (data[i][j] == 'X')
+                    // If the char is 'A' let's walk around the matrix and find our 3-letter words
+                    if (data[i][j] == 'A' && ((i + 1 < data.Count) && (j + 1 < data[i].Count)))
                     {
+                        // All valid arrangements for the letters for the X shaped MAS
+                        List<string> validWrappers = new string[] {"MMSS", "SSMM", "MSMS", "SMSM"}.ToList();
+                        
+                        // Build out the arrangement
+                        string isXMAS = "" + data[i - 1][j - 1] + data[i - 1][j + 1] + data[i + 1][j - 1] + data[i + 1][j + 1];
+
+                        // Check if we have a valid arrangement
+                        if (validWrappers.Contains(isXMAS))
+                        {
+                            // Increment the counter
+                            counter++;
+                        }
+
                         // Add all matches found to our running total
-                        counter += BuildSearchStringForRegex(ref data, i, j);
+                        // counter += BuildSearchStringForRegex(ref data, i, j);
                     }
                 }
             }
@@ -414,11 +428,11 @@ public class OneToFive
     {
         // This regex pattern now looks for don't, do or mul(X,Y) so we can
         // flip a flag and get the correct answer
-        string regexPattern = @"(?=(XMAS|SAMX))";
+        string regexPattern = @"(?=(MAS|SAM))";
         // Create the regex object for this pattern
         Regex regex = new Regex(regexPattern);
 
-        // Find all the mul(X,Y) matches with only 1-3 numbers
+        // Find all of the pattern
         MatchCollection matches = regex.Matches(text);
 
         // Return the count of matches
@@ -524,4 +538,3 @@ public class OneToFive
         return xmas;
     }
 }
-
