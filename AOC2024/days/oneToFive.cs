@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Quic;
 
 public class OneToFive
 {
@@ -558,6 +559,13 @@ public class OneToFive
         // The list of all middle numbers
         List<int> middleNumbers = new List<int>();
 
+        // The sum of reordered prints
+        int sumOfReorderedMiddles = 0;
+        // The list of reordered middle numbers
+        List<int> reorderedMiddleNumbers = new List<int>();
+
+        
+
         // Read the data in from the text file
         using (StreamReader streamReader = new StreamReader(fileName))
         {
@@ -576,15 +584,48 @@ public class OneToFive
                 else if (currentLine.Contains(','))
                 {
                     // Proess the page ordering and get the middle number
-                    // -1 indicates bad ordering
-                    int middleNumber = ProcessPrintOrder(ref pageRules, currentLine);
+                    // Bool indicates good processing or not
+                    // When the int is 0 the int[] indicates the middle number
+                    // When the int is -1 the int[] indicates the problematic pages
+                    // When the int is 1 the page is not found in the rules and is ignored
+                    Dictionary<int, int[]> printOrderResult = ProcessPrintOrder(ref pageRules, currentLine);
 
-                    // Don't do anything with a bad ordering
-                    if (middleNumber == -1) { continue; }
+                    if (printOrderResult.First().Key == 0)
+                    {
+                        // Add our middle number to the running sum, and also the list of middle numbers
+                        sumOfMiddles += printOrderResult.First().Value[0];
+                        middleNumbers.Add(printOrderResult.First().Value[0]);
+                    } else
+                    {
+                        // Split the current line into an array
+                        string[] pages = currentLine.Split(',');
+                        // Create a List<int> to store it in
+                        List<int> pageInts = new List<int>();;
 
-                    // Add our middle number to the running sum, and also the list of middle numbers
-                    sumOfMiddles += middleNumber;
-                    middleNumbers.Add(middleNumber);
+                        // Create a dictionary of the ruleset for this printing run
+                        Dictionary<int, List<int>> specificRules = new Dictionary<int, List<int>>();
+
+                        // Convert all of the page strings to ints, add it's rules to the ruleset
+                        foreach (string page in pages)
+                        {
+                            pageInts.Add(Int32.Parse(page));
+
+                            specificRules.Add(Int32.Parse(page), pageRules[Int32.Parse(page)]);
+                        }
+
+                        // Create the master order for this print run
+                        List<int> masterOrder = CreateMasterOrder(ref specificRules);
+
+                        // Re-check the result
+                        printOrderResult = ProcessPrintOrder(ref pageRules, string.Join(',', masterOrder.ToArray()));
+
+                        // If it's correct, then let's add the middle number to our results
+                        if (printOrderResult.First().Key == 0)
+                        {
+                            sumOfReorderedMiddles += printOrderResult.First().Value[0];
+                            reorderedMiddleNumbers.Add(printOrderResult.First().Value[0]);
+                        }
+                    }
                 }
             }
         }
@@ -605,6 +646,9 @@ public class OneToFive
         Console.WriteLine("-----");
         Console.WriteLine("Sum of Middles: " + sumOfMiddles);
         Console.WriteLine("Count of Middles: " + middleNumbers.Count);
+        Console.WriteLine("-----");
+        Console.WriteLine("Sum of Reordered Middles: " + sumOfReorderedMiddles);
+        Console.WriteLine("Count of Reordered Middles: " + reorderedMiddleNumbers.Count);
     }
 
     /// <summary>
@@ -640,15 +684,60 @@ public class OneToFive
         }
     }
 
+    private List<int> CreateMasterOrder(ref Dictionary<int, List<int>> pageRules)
+    {
+        List<int> masterOrder = new List<int>();
+
+        foreach (KeyValuePair<int, List<int>> keyValuePair in pageRules)
+        {
+            if (masterOrder.Count < 1)
+            {
+                masterOrder.Add(keyValuePair.Key);
+            } else
+            {
+                List<int> temp = new List<int>();
+                temp = keyValuePair.Value;
+
+                int index = -1;
+
+                for (int i = 0; i < temp.Count; i++)
+                {
+                    if (masterOrder.Contains(keyValuePair.Key)) { break; }
+
+                    if (masterOrder.Contains(temp[i]))
+                    {
+                        int currentIndex = masterOrder.IndexOf(temp[i]);
+
+                        if (index == -1 || currentIndex < index) { index = currentIndex; }
+
+                        if (index == 0) { break; }
+                    }
+                }
+
+                if (index == -1) 
+                { 
+                    masterOrder.Add(keyValuePair.Key);
+                } else 
+                {
+                    masterOrder.Insert(index, keyValuePair.Key);
+                }
+            }
+        }
+
+        return masterOrder;
+    }
+
     /// <summary>
     /// Processes the list of pages to determine if it's valid
     /// </summary>
     /// <param name="pageRules">The referenced Dictionary of rules</param>
     /// <param name="pageOrder">The string of the page ordering for printing</param>
     /// <returns></returns>
-    private int ProcessPrintOrder(ref Dictionary<int, List<int>> pageRules, string pageOrder)
+    private Dictionary<int, int[]> ProcessPrintOrder(ref Dictionary<int, List<int>> pageRules, string pageOrder)
     {
         Console.WriteLine("Processing Print Order: " + pageOrder);
+
+        Dictionary<int, int[]> result = new Dictionary<int, int[]>();
 
         // Split out the page numbers (as strings)
         string[] pages = pageOrder.Split(",");
@@ -679,7 +768,11 @@ public class OneToFive
                     if (pageRules[pageNumber].Contains(pageToSearch))
                     {
                         Console.WriteLine("Bad Order for Page: " + pageToSearch);
-                        return -1;
+
+                        int[] pagesWithIssue = {pageNumber, pageToSearch};
+
+                        result.Add(-1, pagesWithIssue);
+                        return result;
                     }
                 }
             } 
@@ -696,13 +789,25 @@ public class OneToFive
                     if (!pageRules[pageNumber].Contains(pageToSearch))
                     {
                         Console.WriteLine("Bad Order for Page: " + pageToSearch);
-                        return -1;
+
+                        int[] pagesWithIssue = {pageNumber, pageToSearch};
+
+                        result.Add(-1, pagesWithIssue);
+                        return result;
                     }
                 }
             }
-            
         }
 
+        int[] pageSuccess = {GetMiddleNumber(pages)};
+
+        result.Add(0, pageSuccess);
+
+        return result;
+    }
+
+    private int GetMiddleNumber(string[] pages)
+    {
         // Grab the index for the middle number
         int middleNumberIndex = pages.Length / 2;
         // Grab the middle number and parse it
