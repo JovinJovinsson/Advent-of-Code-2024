@@ -6,6 +6,9 @@ using Microsoft.VisualBasic.FileIO;
 using System.Text.RegularExpressions;
 using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
+using System.Collections.Generic;
+using System.Net;
 
 public class OneToFive
 {
@@ -257,7 +260,7 @@ public class OneToFive
     }
 
     /// <summary>
-    /// Solves the Day Two portion of the AOC 2024 challenge.
+    /// Solves the Day Three portion of the AOC 2024 challenge.
     /// https://adventofcode.com/2024/day/3
     /// </summary>
     public void DayThree()
@@ -354,7 +357,7 @@ public class OneToFive
     }
 
     /// <summary>
-    /// Solves the Day Two portion of the AOC 2024 challenge.
+    /// Solves the Day Four portion of the AOC 2024 challenge.
     /// Also uses <c>CountWithRegex</c>, <c>BuildSearchStringForRegex</c>, <c>BuildXMAS</c>
     /// https://adventofcode.com/2024/day/4
     /// </summary>
@@ -536,5 +539,69 @@ public class OneToFive
         }
 
         return xmas;
+    }
+
+    /// <summary>
+    /// Solves the Day Five portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/5
+    /// </summary>
+    public void DayFive()
+    {
+        // The input file
+        string fileName = "assets/AOC2024.5.Input.txt";
+
+        // The dictionary of rules for the page orders
+        Dictionary<int, List<int>> pageRules = new Dictionary<int, List<int>>();
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                if (currentLine.Contains('|'))
+                {
+                    ProcessRule(ref pageRules, currentLine);
+                } else
+                {
+                    int middleNumber = ProcessPrinting(ref pageRules, currentLine);
+                }
+            }
+        }
+
+        foreach (KeyValuePair<int, List<int>> pageRule in pageRules)
+        {
+            string output = "Rule for [" + pageRule.Key + "]: ";
+
+            foreach (int subsequent in pageRule.Value)
+            {
+                output += subsequent + ", ";
+            }
+
+            Console.WriteLine(output);
+        }
+    }
+
+    private void ProcessRule(ref Dictionary<int, List<int>> pageRules, string currentLine)
+    {
+        Console.WriteLine("Processing " + currentLine);
+        string[] pages = currentLine.Split("|");
+        int key = Int32.Parse(pages[0]);
+        int before = Int32.Parse(pages[1]);
+
+        if (pageRules.Keys.Contains(key))
+        {
+            if (pageRules[key].Contains(before)) { return; }
+
+            pageRules[key].Add(before);
+        } else
+        {
+            List<int> rule = new List<int>();
+            rule.Add(before);
+
+            pageRules.Add(key, rule);
+        }
     }
 }
