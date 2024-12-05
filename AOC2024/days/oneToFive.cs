@@ -553,6 +553,11 @@ public class OneToFive
         // The dictionary of rules for the page orders
         Dictionary<int, List<int>> pageRules = new Dictionary<int, List<int>>();
 
+        // The sum of all middle numbers
+        int sumOfMiddles = 0;
+        // The list of all middle numbers
+        List<int> middleNumbers = new List<int>();
+
         // Read the data in from the text file
         using (StreamReader streamReader = new StreamReader(fileName))
         {
@@ -561,16 +566,30 @@ public class OneToFive
             // currentLine will be null when the StreamReader reaches the end of file
             while((currentLine = streamReader.ReadLine()) != null)
             {
+                // If the line has a | it's a rule
                 if (currentLine.Contains('|'))
                 {
+                    // Process the rules
                     ProcessRule(ref pageRules, currentLine);
-                } else
+                } 
+                // If it has a , it's a page ordering
+                else if (currentLine.Contains(','))
                 {
-                    int middleNumber = ProcessPrinting(ref pageRules, currentLine);
+                    // Proess the page ordering and get the middle number
+                    // -1 indicates bad ordering
+                    int middleNumber = ProcessPrintOrder(ref pageRules, currentLine);
+
+                    // Don't do anything with a bad ordering
+                    if (middleNumber == -1) { continue; }
+
+                    // Add our middle number to the running sum, and also the list of middle numbers
+                    sumOfMiddles += middleNumber;
+                    middleNumbers.Add(middleNumber);
                 }
             }
         }
 
+        // Outputs because we can
         foreach (KeyValuePair<int, List<int>> pageRule in pageRules)
         {
             string output = "Rule for [" + pageRule.Key + "]: ";
@@ -582,26 +601,115 @@ public class OneToFive
 
             Console.WriteLine(output);
         }
+
+        Console.WriteLine("-----");
+        Console.WriteLine("Sum of Middles: " + sumOfMiddles);
+        Console.WriteLine("Count of Middles: " + middleNumbers.Count);
     }
 
-    private void ProcessRule(ref Dictionary<int, List<int>> pageRules, string currentLine)
+    /// <summary>
+    /// Processes the rules that the pages need to abide by
+    /// </summary>
+    /// <param name="pageRules">The referenced Dictionary of rules</param>
+    /// <param name="rule">The string of the rule</param>
+    private void ProcessRule(ref Dictionary<int, List<int>> pageRules, string rule)
     {
-        Console.WriteLine("Processing " + currentLine);
-        string[] pages = currentLine.Split("|");
+        Console.WriteLine("Processing Rule: " + rule);
+
+        // Split the rule into the 2 numbers (as strings)
+        string[] pages = rule.Split("|");
+        // Parse the strings into integers
         int key = Int32.Parse(pages[0]);
         int before = Int32.Parse(pages[1]);
 
+        // We already have some rules for this page
         if (pageRules.Keys.Contains(key))
         {
+            // If the page that follows already exists, just ignore it
             if (pageRules[key].Contains(before)) { return; }
 
+            // We're here so add the page to the list of pages that must follow this one
             pageRules[key].Add(before);
         } else
         {
-            List<int> rule = new List<int>();
-            rule.Add(before);
+            // We don't have this rule yet, let's build a new one and add the 1st page
+            List<int> ruleset = new List<int>();
+            ruleset.Add(before);
 
-            pageRules.Add(key, rule);
+            pageRules.Add(key, ruleset);
         }
+    }
+
+    /// <summary>
+    /// Processes the list of pages to determine if it's valid
+    /// </summary>
+    /// <param name="pageRules">The referenced Dictionary of rules</param>
+    /// <param name="pageOrder">The string of the page ordering for printing</param>
+    /// <returns></returns>
+    private int ProcessPrintOrder(ref Dictionary<int, List<int>> pageRules, string pageOrder)
+    {
+        Console.WriteLine("Processing Print Order: " + pageOrder);
+
+        // Split out the page numbers (as strings)
+        string[] pages = pageOrder.Split(",");
+        
+        // Iterate over each page to check the following pages (or preceeding for the last)
+        for (int i = 0; i < pages.Length; i++)
+        {
+            // Parse the current page number into an int
+            int pageNumber = Int32.Parse(pages[i]);
+
+            // If we don't have this page in the list of rules, we can just skip checking
+            if (!pageRules.Keys.Contains(pageNumber)) 
+            {
+                Console.WriteLine("Page not found in Rules: " + pageNumber); 
+                continue;
+            }
+
+            // We're on the last page, so we need to check the previous pages
+            if (i + 1 == pages.Length)
+            {
+                // Iterate over the previous pages
+                for (int j = 0; j < pages.Length - 1; j++)
+                {
+                    // Parse each individual preceeding page
+                    int pageToSearch = Int32.Parse(pages[j]);
+
+                    // If the last page contains the previous page in it's rules, it's bad
+                    if (pageRules[pageNumber].Contains(pageToSearch))
+                    {
+                        Console.WriteLine("Bad Order for Page: " + pageToSearch);
+                        return -1;
+                    }
+                }
+            } 
+            // We're checking all following pages here
+            else
+            {
+                // i + 1 as we don't need to check the current or previous pages here (only for the last one)
+                for (int j = i + 1; j < pages.Length - 1; j++)
+                {
+                    // Get the next page and check it's in the rules for the current page
+                    int pageToSearch = Int32.Parse(pages[j]);
+
+                    // If we don't find this page we've got a bad order
+                    if (!pageRules[pageNumber].Contains(pageToSearch))
+                    {
+                        Console.WriteLine("Bad Order for Page: " + pageToSearch);
+                        return -1;
+                    }
+                }
+            }
+            
+        }
+
+        // Grab the index for the middle number
+        int middleNumberIndex = pages.Length / 2;
+        // Grab the middle number and parse it
+        int middleNumber = Int32.Parse(pages[middleNumberIndex]);
+
+        Console.WriteLine("Middle Number: " + middleNumber);
+
+        return middleNumber;
     }
 }
