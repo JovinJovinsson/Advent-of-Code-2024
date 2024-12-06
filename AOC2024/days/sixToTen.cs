@@ -1,4 +1,5 @@
 using System.IO.MemoryMappedFiles;
+using System.Reflection.Metadata.Ecma335;
 
 public class SixToTen
 {
@@ -10,6 +11,7 @@ public class SixToTen
     {
         // The input files
         string fileName = "assets/AOC2024.6.Input.txt";
+        // string fileName = "assets/AOC2024.6.Test-Input.txt";
 
         // List of lists to map out the room and the guard positions
         // The List<List> portion contains the Y traversing (up/down)
@@ -62,8 +64,61 @@ public class SixToTen
             }
         }
 
+        // Count the number of loops found
+        int countOfPossibleLoops = 0;
+
+        // Brute force the way through by changing one position at a time
+        for (int i =0; i < map.Count; i++)
+        {
+            for (int j = 0; j < map[i].Count; j++)
+            {
+                // Skip this one if it's already a #
+                if (map[i][j] == '#') { continue; }
+
+                // Store the original char from the map
+                char original = map[i][j];
+                // Update the position to be an obstacle
+                map[i][j] = '#';
+
+                // Find out how many distinct positions the guard has, if this is -1 it's a loop
+                countOfPositions = CheckGuardRoute(ref map, ref validFacings, guardRow, guardColumn, guardFacing);
+
+                // If we have a loop, increment our loop counter
+                if (countOfPositions == -1)
+                {
+                    countOfPossibleLoops++;
+                }
+
+                // Revert the map to the original
+                map[i][j] = original;
+            }
+        }
+
+        // Console.WriteLine("Count of Locations Travelled by Guard: {0}", countOfPositions);
+        Console.WriteLine("Count of Possible Loops: {0}", countOfPossibleLoops);
+        Console.WriteLine("--- Final Map ---");
+
+        foreach (List<char> row in map)
+        {
+            Console.WriteLine(string.Join("", row.ToArray()));
+        }
+    }
+
+    private int CheckGuardRoute(ref List<List<char>> map, ref List<char> validFacings, int originalRow, int originalColumn, char originalFacing)
+    {
+        // Have a timeout clause
+        int timeout = 10000;
+        int timer = 0;
+
+        // Count the distinct positions of the guard
+        int countOfPositions = 0;
+
         // Allows us to quit the do loop updating the map
         bool guardIsOnMap = true;
+
+        int guardRow = originalRow;
+        int guardColumn = originalColumn;
+        char guardFacing = originalFacing;
 
         // Continually update the facings & location of the guard and check for whether on map
         do
@@ -123,14 +178,11 @@ public class SixToTen
                 countOfPositions++;
             }
 
-        } while (guardIsOnMap);
+            timer++;
 
-        Console.WriteLine("Count of Locations Travelled by Guard: {0}", countOfPositions);
-        Console.WriteLine("--- Final Map ---");
+        } while (guardIsOnMap && timer < timeout);
 
-        foreach (List<char> row in map)
-        {
-            Console.WriteLine(string.Join("", row.ToArray()));
-        }
+        // If we timed out, return -1, otherwise return the count of positions
+        return timer >= timeout ? -1 : countOfPositions;
     }
 }
