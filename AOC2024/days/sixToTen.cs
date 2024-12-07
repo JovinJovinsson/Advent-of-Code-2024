@@ -1,8 +1,12 @@
+using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.IO.MemoryMappedFiles;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices;
 
 public class SixToTen
 {
+    #region Day Six
     /// <summary>
     /// Solves the Day Six portion of the AOC 2024 challenge.
     /// https://adventofcode.com/2024/day/6
@@ -185,4 +189,142 @@ public class SixToTen
         // If we timed out, return -1, otherwise return the count of positions
         return timer >= timeout ? -1 : countOfPositions;
     }
+    #endregion Day Six
+
+    #region Day Seven
+    /// <summary>
+    /// Solves the Day Seven portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/7
+    /// </summary>
+    public void DaySeven()
+    {
+        // The input files
+        // string fileName = "assets/AOC2024.7.Test-Input.txt";
+        string fileName = "assets/AOC2024.7.Input.txt";
+
+        // Count the number of tests performed
+        Dictionary<Int64, List<Int64>> resultAndOperands = new Dictionary<Int64, List<Int64>>();
+
+        // List of valid results that can be summed
+        Dictionary<Int64, List<List<char>>> validOperationsPerResult = new Dictionary<Int64, List<List<char>>>();
+
+        // The sum of all valid results
+        Int64 totalCalibrationResult = 0;
+
+        // Valid guard facings
+        List<char> validOperators = new List<char> {'+', '*', '|'};
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                // Split the currentLine into result & operands
+                string[] splitLine = currentLine.Split(':');
+                // Split the operands into individual numbers and trim the white space
+                string[] operandsString = splitLine[1].Trim().Split(' ');
+
+                // Convert the result to Int64 (very large number)
+                Int64 result = Int64.Parse(splitLine[0]);
+                // Create a list to store the operands
+                List<Int64> operands = new List<Int64>();
+                // Iterate over each operand and convert to Int64
+                foreach (string operand in operandsString)
+                {
+                    // Store the operand the list of operands
+                    operands.Add(Int32.Parse(operand));
+                }
+
+                // Store this one for later processing (if required)
+                resultAndOperands.Add(result, operands);
+
+                // A list of the list of valid operator combinations for the equation
+                List<List<char>> validOperations = new List<List<char>>();
+
+                // The number of operators required for n operands is n-1 (2+2 = 2 operands w/ 1 operand)
+                int operatorsRequired = operands.Count - 1;
+
+                // Calculate the total number of combinations
+                int totalCombinations = (int)Math.Pow(validOperators.Count, operatorsRequired);
+
+                // Go through all operations possible
+                for (int i = 0; i < totalCombinations; i++)
+                {
+                    // Convert i into the appropriate base and replace with operators
+                    string operatorCombination = ConvertToBase(i, validOperators.Count, operatorsRequired, validOperators);
+
+                    // The initial current result would start with the first operand
+                    Int64 currentResult = operands[0];
+
+                    // Iterate over each operand
+                    for (int j = 0; j < operatorsRequired; j++)
+                    {
+                        // Find out the next operator
+                        // + will add the next operand to the current result
+                        // * will multiply the current result by the next operand
+                        // | will concatenate the current result by the next operand (e.g. 15|3 = 153)
+                        switch(operatorCombination[j])
+                        {
+                            case '+': currentResult += operands[j + 1]; break;
+                            case '*': currentResult *= operands[j + 1]; break;
+                            case '|': currentResult = Int64.Parse("" + currentResult + "" + operands[j + 1]); break;
+                        }
+                    }
+
+                    // If the resulting equation matches the result, add it as a valid operation
+                    if (currentResult == result)
+                    {
+                        validOperations.Add(operatorCombination.ToList());
+                    }
+                }
+
+                // If the number of valid operations is >0 add this to the valid operations dictionary
+                if (validOperations.Count > 0)
+                {
+                    validOperationsPerResult.Add(result, validOperations);
+                    // Also add the result to the running total
+                    totalCalibrationResult += result;
+                }
+            }
+        }
+
+        Console.WriteLine("Count of Results Tested: {0}", resultAndOperands.Count);
+        Console.WriteLine("Count of Valid Results: {0}", validOperationsPerResult.Count);
+        Console.WriteLine("Total Calibration Result: {0}", totalCalibrationResult);
+    }
+
+    /// <summary>
+    /// Converts a given integer into a string representation using a specified base 
+    /// and maps each digit to a corresponding character from a provided operator set.
+    /// </summary>
+    /// <param name="number">The number to convert.</param>
+    /// <param name="baseValue">The base to use for conversion (e.g., 2 for binary, 4 for quaternary).</param>
+    /// <param name="length">The desired length of the resulting string. Pads with leading characters if necessary.</param>
+    /// <param name="operators">
+    /// An array of characters representing the symbols to use for each digit (e.g., { '+', '*', '|' }).
+    /// </param>
+    /// <returns>
+    /// A string representation of the number in the specified base, where each digit is replaced 
+    /// by the corresponding character from the operators array.
+    /// </returns>
+    private string ConvertToBase(int number, int baseValue, int length, List<char> operators)
+    {
+        // The combination of operators
+        char[] result = new char[length];
+
+        // For each operator required
+        for (int i = length - 1; i >= 0; i--)
+        {
+            // Modulo by the base and find the appropriate operator
+            result[i] = operators[number % baseValue];
+            // Modify the remaining number to identify the next value to modulo
+            number /= baseValue;
+        }
+
+        return new string(result);
+    }
+    #endregion Day Seven
 }
