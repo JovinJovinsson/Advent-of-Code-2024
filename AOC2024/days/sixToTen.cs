@@ -1,4 +1,5 @@
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.IO.MemoryMappedFiles;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
@@ -211,7 +212,7 @@ public class SixToTen
         Int64 totalCalibrationResult = 0;
 
         // Valid guard facings
-        List<char> validOperators = new List<char> {'+', '*'};
+        List<char> validOperators = new List<char> {'+', '*', '|'};
 
         // Read the data in from the text file
         using (StreamReader streamReader = new StreamReader(fileName))
@@ -252,8 +253,8 @@ public class SixToTen
                 // Go through all operations possible
                 for (int i = 0; i < totalCombinations; i++)
                 {
-                    // Convert i into binary, then replace the 0's and 1's with the operators
-                    string operatorCombination = Convert.ToString(i, 2).PadLeft(operatorsRequired, '0').Replace('0', validOperators[0]).Replace('1', validOperators[1]);
+                    // Convert i into the appropriate base and replace with operators
+                    string operatorCombination = ConvertToBase(i, validOperators.Count, operatorsRequired, validOperators);
 
                     // The initial current result would start with the first operand
                     Int64 currentResult = operands[0];
@@ -261,13 +262,15 @@ public class SixToTen
                     // Iterate over each operand
                     for (int j = 0; j < operatorsRequired; j++)
                     {
-                        // If the next operator is +, add the result, otherwise multiply
-                        if (operatorCombination[j] == '+')
+                        // Find out the next operator
+                        // + will add the next operand to the current result
+                        // * will multiply the current result by the next operand
+                        // | will concatenate the current result by the next operand (e.g. 15|3 = 153)
+                        switch(operatorCombination[j])
                         {
-                            currentResult += operands[j + 1];
-                        } else if (operatorCombination[j] == '*')
-                        {
-                            currentResult *= operands[j + 1];
+                            case '+': currentResult += operands[j + 1]; break;
+                            case '*': currentResult *= operands[j + 1]; break;
+                            case '|': currentResult = Int64.Parse("" + currentResult + "" + operands[j + 1]); break;
                         }
                     }
 
@@ -291,6 +294,37 @@ public class SixToTen
         Console.WriteLine("Count of Results Tested: {0}", resultAndOperands.Count);
         Console.WriteLine("Count of Valid Results: {0}", validOperationsPerResult.Count);
         Console.WriteLine("Total Calibration Result: {0}", totalCalibrationResult);
+    }
+
+    /// <summary>
+    /// Converts a given integer into a string representation using a specified base 
+    /// and maps each digit to a corresponding character from a provided operator set.
+    /// </summary>
+    /// <param name="number">The number to convert.</param>
+    /// <param name="baseValue">The base to use for conversion (e.g., 2 for binary, 4 for quaternary).</param>
+    /// <param name="length">The desired length of the resulting string. Pads with leading characters if necessary.</param>
+    /// <param name="operators">
+    /// An array of characters representing the symbols to use for each digit (e.g., { '+', '*', '|' }).
+    /// </param>
+    /// <returns>
+    /// A string representation of the number in the specified base, where each digit is replaced 
+    /// by the corresponding character from the operators array.
+    /// </returns>
+    private string ConvertToBase(int number, int baseValue, int length, List<char> operators)
+    {
+        // The combination of operators
+        char[] result = new char[length];
+
+        // For each operator required
+        for (int i = length - 1; i >= 0; i--)
+        {
+            // Modulo by the base and find the appropriate operator
+            result[i] = operators[number % baseValue];
+            // Modify the remaining number to identify the next value to modulo
+            number /= baseValue;
+        }
+
+        return new string(result);
     }
     #endregion Day Seven
 }
