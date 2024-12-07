@@ -198,17 +198,17 @@ public class SixToTen
     public void DaySeven()
     {
         // The input files
-        string fileName = "assets/AOC2024.7.Test-Input.txt";
-        // string fileName = "assets/AOC2024.6.Test-Input.txt";
+        // string fileName = "assets/AOC2024.7.Test-Input.txt";
+        string fileName = "assets/AOC2024.7.Input.txt";
 
         // Count the number of tests performed
-        Dictionary<int, List<int>> resultAndOperands = new Dictionary<int, List<int>>();
+        Dictionary<Int64, List<Int64>> resultAndOperands = new Dictionary<Int64, List<Int64>>();
 
         // List of valid results that can be summed
-        Dictionary<int, List<List<char>>> validOperationsPerResult = new Dictionary<int, List<List<char>>>();
+        Dictionary<Int64, List<List<char>>> validOperationsPerResult = new Dictionary<Int64, List<List<char>>>();
 
         // The sum of all valid results
-        int totalCalibrationResult = 0;
+        Int64 totalCalibrationResult = 0;
 
         // Valid guard facings
         List<char> validOperators = new List<char> {'+', '*'};
@@ -221,33 +221,47 @@ public class SixToTen
             // currentLine will be null when the StreamReader reaches the end of file
             while((currentLine = streamReader.ReadLine()) != null)
             {
+                // Split the currentLine into result & operands
                 string[] splitLine = currentLine.Split(':');
+                // Split the operands into individual numbers and trim the white space
                 string[] operandsString = splitLine[1].Trim().Split(' ');
 
-                int result = Int32.Parse(splitLine[0]);
-                List<int> operands = new List<int>();
-
+                // Convert the result to Int64 (very large number)
+                Int64 result = Int64.Parse(splitLine[0]);
+                // Create a list to store the operands
+                List<Int64> operands = new List<Int64>();
+                // Iterate over each operand and convert to Int64
                 foreach (string operand in operandsString)
                 {
+                    // Store the operand the list of operands
                     operands.Add(Int32.Parse(operand));
                 }
 
+                // Store this one for later processing (if required)
                 resultAndOperands.Add(result, operands);
 
+                // A list of the list of valid operator combinations for the equation
                 List<List<char>> validOperations = new List<List<char>>();
 
+                // The number of operators required for n operands is n-1 (2+2 = 2 operands w/ 1 operand)
                 int operatorsRequired = operands.Count - 1;
 
-                int totalCombinations = (int)Math.Pow(2, operatorsRequired);
+                // Calculate the total number of combinations
+                int totalCombinations = (int)Math.Pow(validOperators.Count, operatorsRequired);
 
+                // Go through all operations possible
                 for (int i = 0; i < totalCombinations; i++)
                 {
-                    string operatorCombination = Convert.ToString(i, 2).PadLeft(operatorsRequired, '0').Replace('0', '+').Replace('1', '*');
+                    // Convert i into binary, then replace the 0's and 1's with the operators
+                    string operatorCombination = Convert.ToString(i, 2).PadLeft(operatorsRequired, '0').Replace('0', validOperators[0]).Replace('1', validOperators[1]);
 
-                    int currentResult = operands[0];
+                    // The initial current result would start with the first operand
+                    Int64 currentResult = operands[0];
 
+                    // Iterate over each operand
                     for (int j = 0; j < operatorsRequired; j++)
                     {
+                        // If the next operator is +, add the result, otherwise multiply
                         if (operatorCombination[j] == '+')
                         {
                             currentResult += operands[j + 1];
@@ -257,15 +271,18 @@ public class SixToTen
                         }
                     }
 
+                    // If the resulting equation matches the result, add it as a valid operation
                     if (currentResult == result)
                     {
                         validOperations.Add(operatorCombination.ToList());
                     }
                 }
 
+                // If the number of valid operations is >0 add this to the valid operations dictionary
                 if (validOperations.Count > 0)
                 {
                     validOperationsPerResult.Add(result, validOperations);
+                    // Also add the result to the running total
                     totalCalibrationResult += result;
                 }
             }
