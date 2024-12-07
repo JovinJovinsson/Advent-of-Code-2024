@@ -1,8 +1,11 @@
+using System.Diagnostics.Metrics;
 using System.IO.MemoryMappedFiles;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices;
 
 public class SixToTen
 {
+    #region Day Six
     /// <summary>
     /// Solves the Day Six portion of the AOC 2024 challenge.
     /// https://adventofcode.com/2024/day/6
@@ -185,4 +188,92 @@ public class SixToTen
         // If we timed out, return -1, otherwise return the count of positions
         return timer >= timeout ? -1 : countOfPositions;
     }
+    #endregion Day Six
+
+    #region Day Seven
+    /// <summary>
+    /// Solves the Day Seven portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/7
+    /// </summary>
+    public void DaySeven()
+    {
+        // The input files
+        string fileName = "assets/AOC2024.7.Test-Input.txt";
+        // string fileName = "assets/AOC2024.6.Test-Input.txt";
+
+        // Count the number of tests performed
+        Dictionary<int, List<int>> resultAndOperands = new Dictionary<int, List<int>>();
+
+        // List of valid results that can be summed
+        Dictionary<int, List<List<char>>> validOperationsPerResult = new Dictionary<int, List<List<char>>>();
+
+        // The sum of all valid results
+        int totalCalibrationResult = 0;
+
+        // Valid guard facings
+        List<char> validOperators = new List<char> {'+', '*'};
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                string[] splitLine = currentLine.Split(':');
+                string[] operandsString = splitLine[1].Trim().Split(' ');
+
+                int result = Int32.Parse(splitLine[0]);
+                List<int> operands = new List<int>();
+
+                foreach (string operand in operandsString)
+                {
+                    operands.Add(Int32.Parse(operand));
+                }
+
+                resultAndOperands.Add(result, operands);
+
+                List<List<char>> validOperations = new List<List<char>>();
+
+                int operatorsRequired = operands.Count - 1;
+
+                int totalCombinations = (int)Math.Pow(2, operatorsRequired);
+
+                for (int i = 0; i < totalCombinations; i++)
+                {
+                    string operatorCombination = Convert.ToString(i, 2).PadLeft(operatorsRequired, '0').Replace('0', '+').Replace('1', '*');
+
+                    int currentResult = operands[0];
+
+                    for (int j = 0; j < operatorsRequired; j++)
+                    {
+                        if (operatorCombination[j] == '+')
+                        {
+                            currentResult += operands[j + 1];
+                        } else if (operatorCombination[j] == '*')
+                        {
+                            currentResult *= operands[j + 1];
+                        }
+                    }
+
+                    if (currentResult == result)
+                    {
+                        validOperations.Add(operatorCombination.ToList());
+                    }
+                }
+
+                if (validOperations.Count > 0)
+                {
+                    validOperationsPerResult.Add(result, validOperations);
+                    totalCalibrationResult += result;
+                }
+            }
+        }
+
+        Console.WriteLine("Count of Results Tested: {0}", resultAndOperands.Count);
+        Console.WriteLine("Count of Valid Results: {0}", validOperationsPerResult.Count);
+        Console.WriteLine("Total Calibration Result: {0}", totalCalibrationResult);
+    }
+    #endregion Day Seven
 }
