@@ -327,4 +327,28 @@ public class SixToTen
         return new string(result);
     }
     #endregion Day Seven
+
+    #region Day Eight
+    /// <summary>
+    /// Solves the Day Seven portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/7
+    /// </summary>
+    public void DayEight()
+    {
+        // The input files
+        string fileName = "assets/AOC2024.8.Test-Input.txt";
+        // string fileName = "assets/AOC2024.8.Input.txt";
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+            }
+        }
+    }
+    #endregion Day Eight
 }
