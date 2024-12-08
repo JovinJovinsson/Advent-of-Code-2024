@@ -9,4 +9,5 @@
 SixToTen sixToTen = new SixToTen(); 
 
 // sixToTen.DaySix();
-sixToTen.DaySeven();
+// sixToTen.DaySeven();
+sixToTen.DayEight();

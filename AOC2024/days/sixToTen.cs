@@ -330,8 +330,8 @@ public class SixToTen
 
     #region Day Eight
     /// <summary>
-    /// Solves the Day Seven portion of the AOC 2024 challenge.
-    /// https://adventofcode.com/2024/day/7
+    /// Solves the Day Eight portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/8
     /// </summary>
     public void DayEight()
     {
@@ -339,15 +339,113 @@ public class SixToTen
         string fileName = "assets/AOC2024.8.Test-Input.txt";
         // string fileName = "assets/AOC2024.8.Input.txt";
 
+        // List of List of chars representing the map of the town
+        List<List<char>> emitterMap = new List<List<char>>();
+
+        // A dictionary of the emitter types where the emitter type is the key
+        // A list of list of ints contains the locations of that emitter in the map
+        Dictionary<char, List<List<int>>> emitterTypes = new Dictionary<char, List<List<int>>>();
+
+        // A map of only the antinodes, # marks an antinode on the example, but I will use
+        // a number to indicate this, in case there are multiple antinodes. It will start
+        // at 0 and increment to 9 before using the alphabet.
+        List<List<char>> antinodeMap = new List<List<char>>();
+        // A count of the number of antinotes
+        int antinodeCount = 0;
+
         // Read the data in from the text file
         using (StreamReader streamReader = new StreamReader(fileName))
         {
             // Placeholder for the current line of the tile
             string currentLine;
+
+            // The current row we're processing
+            int row = 0;
+
             // currentLine will be null when the StreamReader reaches the end of file
             while((currentLine = streamReader.ReadLine()) != null)
             {
+                emitterMap.Add(currentLine.ToList());
+
+                antinodeMap.Add("".PadLeft(currentLine.Length, '.').ToCharArray().ToList());
+
+                for (int i = 0; i < currentLine.Length; i++)
+                {
+                    if (currentLine[i] == '.') { continue; }
+
+                    List<int> location = new List<int> { row, i };
+
+                    if (emitterTypes.Keys.Contains(currentLine[i]))
+                    {
+                        emitterTypes[currentLine[i]].Add(location);
+                    } else
+                    {
+                        emitterTypes.Add(currentLine[i], new List<List<int>> { location });
+                    }
+                }
+
+                row++;
             }
+        }
+
+        foreach (KeyValuePair<char, List<List<int>>> emitter in emitterTypes)
+        {
+            // Iterate over each emitter and get the position of the antinode
+            // for all other emitters of the same type
+            for (int i = 0; i < emitter.Value.Count; i++)
+            {
+                for (int j = 0; j < emitter.Value.Count; j++)
+                {
+                    // Skip this emitter as it's identical
+                    if (i == j) { continue; }
+
+                    int row = emitter.Value[i][0] + (emitter.Value[i][0] - emitter.Value[j][0]);
+                    int col = emitter.Value[i][1] + (emitter.Value[i][1] - emitter.Value[j][1]);
+
+                    if (i + row > antinodeMap.Count || i + row < 0) { continue; }
+                    if (j + col > antinodeMap[row].Count || j + col < 0) { continue; }
+
+                    char antinode = antinodeMap[row][col];
+
+                    if (antinode == '.')
+                    {
+                        antinodeMap[row][col] = '0';
+                    } else
+                    {
+                        // Increment the char ID
+                        antinodeMap[row][col]++;
+                    }
+
+                    antinodeCount++;
+                }                
+            }
+        }
+
+        Console.WriteLine("     -------------------");
+        Console.WriteLine("     --- Emitter Map ---");
+        Console.WriteLine("     -------------------");
+        for (int i = 0; i < emitterMap.Count; i++)
+        {
+            Console.WriteLine("{0}: " + string.Join("", emitterMap[i]), i.ToString().PadLeft(4, '0'));   
+        }
+        Console.WriteLine("\n     ----------------------------");
+        Console.WriteLine("     --- Emitters & Locations ---");
+        Console.WriteLine("     ----------------------------");
+        foreach (KeyValuePair<char, List<List<int>>> emitterDetails in emitterTypes)
+        {
+            Console.WriteLine("|| Emitter {0}||", emitterDetails.Key);
+
+            for (int i = 0; i < emitterDetails.Value.Count; i++)
+            {
+                Console.WriteLine("{0}: [ {1}, {2} ]", i.ToString().PadLeft(4, '0'), emitterDetails.Value[i][0], emitterDetails.Value[i][1]);
+            }
+        }
+        Console.WriteLine("\n     --------------------");
+        Console.WriteLine("     --- Antinode Map --- (Count: {0})", antinodeCount);
+        Console.WriteLine("     --------------------");
+        for (int i = 0; i < emitterMap.Count; i++)
+        {
+            Console.WriteLine("{0}: " + string.Join("", antinodeMap[i]), i.ToString().PadLeft(4, '0'));   
         }
     }
     #endregion Day Eight
