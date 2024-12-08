@@ -366,48 +366,65 @@ public class SixToTen
             // currentLine will be null when the StreamReader reaches the end of file
             while((currentLine = streamReader.ReadLine()) != null)
             {
+                // Convert the string to a list of chars
                 emitterMap.Add(currentLine.ToList());
-
+                // Create an antinode map of the same dimensions using only .
                 antinodeMap.Add("".PadLeft(currentLine.Length, '.').ToCharArray().ToList());
 
+                // iterate over each character in the current line
                 for (int i = 0; i < currentLine.Length; i++)
                 {
+                    // If it's a '.' move on
                     if (currentLine[i] == '.') { continue; }
 
+                    // Identify the row & column of this antenna
                     List<int> location = new List<int> { row, i };
 
+                    // If the antenna type has already been found
                     if (emitterTypes.Keys.Contains(currentLine[i]))
                     {
+                        // Add the new location to the dictionary for that antenna
                         emitterTypes[currentLine[i]].Add(location);
                     } else
                     {
+                        // Otherwise, let's add a new antenna type & it's 1st location
                         emitterTypes.Add(currentLine[i], new List<List<int>> { location });
                     }
                 }
 
+                // Increment the row
                 row++;
             }
         }
 
+        // Iterate over each emitter type (antenna type)
         foreach (KeyValuePair<char, List<List<int>>> emitter in emitterTypes)
         {
-            // Iterate over each emitter and get the position of the antinode
-            // for all other emitters of the same type
+            // For each location, we'll check against every other location
             for (int i = 0; i < emitter.Value.Count; i++)
             {
+                // The other location
                 for (int j = 0; j < emitter.Value.Count; j++)
                 {
-                    // Skip this emitter as it's identical
+                    // Skip this emitter as it's the original one
                     if (i == j) { continue; }
 
+                    // Calculate the position of the antinode by calculating the difference
+                    // between 2 locations, and adding it to the original location. We use 
+                    // addition as negative values will correctly subtract.
+                    // We only need to do the closest antinode, as the other location when
+                    // checked will find the 2nd antinode
                     int row = emitter.Value[i][0] + (emitter.Value[i][0] - emitter.Value[j][0]);
                     int col = emitter.Value[i][1] + (emitter.Value[i][1] - emitter.Value[j][1]);
 
+                    // This particular antinode is off the map, let's skip
                     if (row >= antinodeMap.Count || row < 0) { continue; }
                     if (col >= antinodeMap[row].Count || col < 0) { continue; }
 
+                    // Grab the marker for the antinode
                     char antinode = antinodeMap[row][col];
 
+                    // If it's a '.' we don't have an antinode here yet
                     if (antinode == '.')
                     {
                         // Set the first antinode here
@@ -415,6 +432,7 @@ public class SixToTen
                         uniqueAntinodeCount++;
                     } else
                     {
+                        // We already have an antinode here, let's increase the marker to show multiples
                         // Increment the char ID
                         antinodeMap[row][col]++;
                     }
