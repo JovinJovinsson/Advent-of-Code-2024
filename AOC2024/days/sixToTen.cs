@@ -400,6 +400,8 @@ public class SixToTen
         // Iterate over each emitter type (antenna type)
         foreach (KeyValuePair<char, List<List<int>>> emitter in emitterTypes)
         {
+            if (emitter.Value.Count == 1) { continue; }
+
             // For each location, we'll check against every other location
             for (int i = 0; i < emitter.Value.Count; i++)
             {
@@ -409,36 +411,38 @@ public class SixToTen
                     // Skip this emitter as it's the original one
                     if (i == j) { continue; }
 
-                    // Calculate the position of the antinode by calculating the difference
-                    // between 2 locations, and adding it to the original location. We use 
-                    // addition as negative values will correctly subtract.
-                    // We only need to do the closest antinode, as the other location when
-                    // checked will find the 2nd antinode
-                    int row = emitter.Value[i][0] + (emitter.Value[i][0] - emitter.Value[j][0]);
-                    int col = emitter.Value[i][1] + (emitter.Value[i][1] - emitter.Value[j][1]);
+                    // Grab the location of the origin checking emitter
+                    int row = emitter.Value[i][0];
+                    int col = emitter.Value[i][1];
 
-                    // This particular antinode is off the map, let's skip
-                    if (row >= antinodeMap.Count || row < 0) { continue; }
-                    if (col >= antinodeMap[row].Count || col < 0) { continue; }
-
-                    // Grab the marker for the antinode
-                    char antinode = antinodeMap[row][col];
-
-                    // If it's a '.' we don't have an antinode here yet
-                    if (antinode == '.')
-                    {
-                        // Set the first antinode here
-                        antinodeMap[row][col] = '0';
-                        uniqueAntinodeCount++;
-                    } else
-                    {
-                        // We already have an antinode here, let's increase the marker to show multiples
-                        // Increment the char ID
-                        antinodeMap[row][col]++;
-                    }
-
+                    // This is now an antinode as well, update our map & unique count accordingly
+                    uniqueAntinodeCount += UpdateAntinodeMap(ref antinodeMap, row, col) ? 1 : 0;
+                    // Also update our count of antinodes in total
                     antinodeCount++;
-                }                
+                    
+                    // Calculate the row & column offset between emitter-i and emitter-j
+                    int rowOffset = emitter.Value[i][0] - emitter.Value[j][0];
+                    int colOffset = emitter.Value[i][1] - emitter.Value[j][1];
+
+                    // Grab the maximum boundaries for the map
+                    int rowMax = emitterMap.Count;
+                    int colMax = emitterMap[i].Count;
+
+                    // Calling IsAntinodeWithinBounds will calculate the location of the next antinode
+                    // If the location is on the map, then let's proceed
+                    // This will loop until we reach an antinode that is not on the map
+                    while (IsAntinodeWithinBounds(row, col, rowOffset, colOffset, rowMax, colMax, out int antinodeRow, out int antinodeCol))
+                    {
+                        // Update our antinode map accordingly, and if required our unique antinode count
+                        uniqueAntinodeCount += UpdateAntinodeMap(ref antinodeMap, antinodeRow, antinodeCol) ? 1 : 0;
+                        // Also update our total count
+                        antinodeCount++;
+
+                        // Lastly, set our current row & col to the antinodes position so we can calculate the next antinode
+                        row = antinodeRow;
+                        col = antinodeCol;
+                    }
+                }
             }
         }
 
@@ -468,6 +472,47 @@ public class SixToTen
         {
             Console.WriteLine("{0}: " + string.Join("", antinodeMap[i]), i.ToString().PadLeft(4, '0'));   
         }
+    }
+
+    private bool IsAntinodeWithinBounds(int row, int col, int rowOffset, int colOffset, int rowMax, int colMax, out int antinodeRow, out int antinodeCol)
+    {
+        // Calculate the location of the antinode by adding the offset to the row & column
+        // We add so that negatives are correctly subtracted
+        // These are also "out" variables allowing us to use them in the while loop
+        antinodeRow = row + rowOffset;
+        antinodeCol = col + colOffset;
+
+        // If it's out of bounds, return false
+        if (antinodeRow < 0 || antinodeRow >= rowMax || antinodeCol < 0 || antinodeCol >= colMax)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool UpdateAntinodeMap(ref List<List<char>> antinodeMap, int row, int col)
+    {
+        // Flag to determine whether this antinode was unique
+        bool isUnique = false;
+
+        // Grab the marker for the antinode
+        char antinode = antinodeMap[row][col];
+
+        // If it's a '.' we don't have an antinode here yet
+        if (antinode == '.')
+        {
+            // Set the first antinode here
+            antinodeMap[row][col] = '0';
+            isUnique = true;
+        } else
+        {
+            // We already have an antinode here, let's increase the marker to show multiples
+            // Increment the char ID
+            antinodeMap[row][col]++;
+        }
+
+        return isUnique;
     }
     #endregion Day Eight
 }
