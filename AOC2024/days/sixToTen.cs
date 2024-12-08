@@ -336,8 +336,8 @@ public class SixToTen
     public void DayEight()
     {
         // The input files
-        string fileName = "assets/AOC2024.8.Test-Input.txt";
-        // string fileName = "assets/AOC2024.8.Input.txt";
+        // string fileName = "assets/AOC2024.8.Test-Input.txt";
+        string fileName = "assets/AOC2024.8.Input.txt";
 
         // List of List of chars representing the map of the town
         List<List<char>> emitterMap = new List<List<char>>();
@@ -352,6 +352,7 @@ public class SixToTen
         List<List<char>> antinodeMap = new List<List<char>>();
         // A count of the number of antinotes
         int antinodeCount = 0;
+        int uniqueAntinodeCount = 0;
 
         // Read the data in from the text file
         using (StreamReader streamReader = new StreamReader(fileName))
@@ -402,14 +403,16 @@ public class SixToTen
                     int row = emitter.Value[i][0] + (emitter.Value[i][0] - emitter.Value[j][0]);
                     int col = emitter.Value[i][1] + (emitter.Value[i][1] - emitter.Value[j][1]);
 
-                    if (i + row > antinodeMap.Count || i + row < 0) { continue; }
-                    if (j + col > antinodeMap[row].Count || j + col < 0) { continue; }
+                    if (row >= antinodeMap.Count || row < 0) { continue; }
+                    if (col >= antinodeMap[row].Count || col < 0) { continue; }
 
                     char antinode = antinodeMap[row][col];
 
                     if (antinode == '.')
                     {
+                        // Set the first antinode here
                         antinodeMap[row][col] = '0';
+                        uniqueAntinodeCount++;
                     } else
                     {
                         // Increment the char ID
@@ -433,7 +436,7 @@ public class SixToTen
         Console.WriteLine("     ----------------------------");
         foreach (KeyValuePair<char, List<List<int>>> emitterDetails in emitterTypes)
         {
-            Console.WriteLine("|| Emitter {0}||", emitterDetails.Key);
+            Console.WriteLine("|| Emitter {0} ||", emitterDetails.Key);
 
             for (int i = 0; i < emitterDetails.Value.Count; i++)
             {
@@ -441,7 +444,7 @@ public class SixToTen
             }
         }
         Console.WriteLine("\n     --------------------");
-        Console.WriteLine("     --- Antinode Map --- (Count: {0})", antinodeCount);
+        Console.WriteLine("     --- Antinode Map --- (Total: {0} | Unique: {1})", antinodeCount, uniqueAntinodeCount);
         Console.WriteLine("     --------------------");
         for (int i = 0; i < emitterMap.Count; i++)
         {
