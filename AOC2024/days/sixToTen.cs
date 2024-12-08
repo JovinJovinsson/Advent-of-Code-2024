@@ -327,4 +327,192 @@ public class SixToTen
         return new string(result);
     }
     #endregion Day Seven
+
+    #region Day Eight
+    /// <summary>
+    /// Solves the Day Eight portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/8
+    /// </summary>
+    public void DayEight()
+    {
+        // The input files
+        // string fileName = "assets/AOC2024.8.Test-Input.txt";
+        string fileName = "assets/AOC2024.8.Input.txt";
+
+        // List of List of chars representing the map of the town
+        List<List<char>> emitterMap = new List<List<char>>();
+
+        // A dictionary of the emitter types where the emitter type is the key
+        // A list of list of ints contains the locations of that emitter in the map
+        Dictionary<char, List<List<int>>> emitterTypes = new Dictionary<char, List<List<int>>>();
+
+        // A map of only the antinodes, # marks an antinode on the example, but I will use
+        // a number to indicate this, in case there are multiple antinodes. It will start
+        // at 0 and increment to 9 before using the alphabet.
+        List<List<char>> antinodeMap = new List<List<char>>();
+        // A count of the number of antinotes
+        int antinodeCount = 0;
+        int uniqueAntinodeCount = 0;
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+
+            // The current row we're processing
+            int row = 0;
+
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                // Convert the string to a list of chars
+                emitterMap.Add(currentLine.ToList());
+                // Create an antinode map of the same dimensions using only .
+                antinodeMap.Add("".PadLeft(currentLine.Length, '.').ToCharArray().ToList());
+
+                // iterate over each character in the current line
+                for (int i = 0; i < currentLine.Length; i++)
+                {
+                    // If it's a '.' move on
+                    if (currentLine[i] == '.') { continue; }
+
+                    // Identify the row & column of this antenna
+                    List<int> location = new List<int> { row, i };
+
+                    // If the antenna type has already been found
+                    if (emitterTypes.Keys.Contains(currentLine[i]))
+                    {
+                        // Add the new location to the dictionary for that antenna
+                        emitterTypes[currentLine[i]].Add(location);
+                    } else
+                    {
+                        // Otherwise, let's add a new antenna type & it's 1st location
+                        emitterTypes.Add(currentLine[i], new List<List<int>> { location });
+                    }
+                }
+
+                // Increment the row
+                row++;
+            }
+        }
+
+        // Iterate over each emitter type (antenna type)
+        foreach (KeyValuePair<char, List<List<int>>> emitter in emitterTypes)
+        {
+            if (emitter.Value.Count == 1) { continue; }
+
+            // For each location, we'll check against every other location
+            for (int i = 0; i < emitter.Value.Count; i++)
+            {
+                // The other location
+                for (int j = 0; j < emitter.Value.Count; j++)
+                {
+                    // Skip this emitter as it's the original one
+                    if (i == j) { continue; }
+
+                    // Grab the location of the origin checking emitter
+                    int row = emitter.Value[i][0];
+                    int col = emitter.Value[i][1];
+
+                    // This is now an antinode as well, update our map & unique count accordingly
+                    uniqueAntinodeCount += UpdateAntinodeMap(ref antinodeMap, row, col) ? 1 : 0;
+                    // Also update our count of antinodes in total
+                    antinodeCount++;
+                    
+                    // Calculate the row & column offset between emitter-i and emitter-j
+                    int rowOffset = emitter.Value[i][0] - emitter.Value[j][0];
+                    int colOffset = emitter.Value[i][1] - emitter.Value[j][1];
+
+                    // Grab the maximum boundaries for the map
+                    int rowMax = emitterMap.Count;
+                    int colMax = emitterMap[i].Count;
+
+                    // Calling IsAntinodeWithinBounds will calculate the location of the next antinode
+                    // If the location is on the map, then let's proceed
+                    // This will loop until we reach an antinode that is not on the map
+                    while (IsAntinodeWithinBounds(row, col, rowOffset, colOffset, rowMax, colMax, out int antinodeRow, out int antinodeCol))
+                    {
+                        // Update our antinode map accordingly, and if required our unique antinode count
+                        uniqueAntinodeCount += UpdateAntinodeMap(ref antinodeMap, antinodeRow, antinodeCol) ? 1 : 0;
+                        // Also update our total count
+                        antinodeCount++;
+
+                        // Lastly, set our current row & col to the antinodes position so we can calculate the next antinode
+                        row = antinodeRow;
+                        col = antinodeCol;
+                    }
+                }
+            }
+        }
+
+        Console.WriteLine("     -------------------");
+        Console.WriteLine("     --- Emitter Map ---");
+        Console.WriteLine("     -------------------");
+        for (int i = 0; i < emitterMap.Count; i++)
+        {
+            Console.WriteLine("{0}: " + string.Join("", emitterMap[i]), i.ToString().PadLeft(4, '0'));   
+        }
+        Console.WriteLine("\n     ----------------------------");
+        Console.WriteLine("     --- Emitters & Locations ---");
+        Console.WriteLine("     ----------------------------");
+        foreach (KeyValuePair<char, List<List<int>>> emitterDetails in emitterTypes)
+        {
+            Console.WriteLine("|| Emitter {0} ||", emitterDetails.Key);
+
+            for (int i = 0; i < emitterDetails.Value.Count; i++)
+            {
+                Console.WriteLine("{0}: [ {1}, {2} ]", i.ToString().PadLeft(4, '0'), emitterDetails.Value[i][0], emitterDetails.Value[i][1]);
+            }
+        }
+        Console.WriteLine("\n     --------------------");
+        Console.WriteLine("     --- Antinode Map --- (Total: {0} | Unique: {1})", antinodeCount, uniqueAntinodeCount);
+        Console.WriteLine("     --------------------");
+        for (int i = 0; i < emitterMap.Count; i++)
+        {
+            Console.WriteLine("{0}: " + string.Join("", antinodeMap[i]), i.ToString().PadLeft(4, '0'));   
+        }
+    }
+
+    private bool IsAntinodeWithinBounds(int row, int col, int rowOffset, int colOffset, int rowMax, int colMax, out int antinodeRow, out int antinodeCol)
+    {
+        // Calculate the location of the antinode by adding the offset to the row & column
+        // We add so that negatives are correctly subtracted
+        // These are also "out" variables allowing us to use them in the while loop
+        antinodeRow = row + rowOffset;
+        antinodeCol = col + colOffset;
+
+        // If it's out of bounds, return false
+        if (antinodeRow < 0 || antinodeRow >= rowMax || antinodeCol < 0 || antinodeCol >= colMax)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool UpdateAntinodeMap(ref List<List<char>> antinodeMap, int row, int col)
+    {
+        // Flag to determine whether this antinode was unique
+        bool isUnique = false;
+
+        // Grab the marker for the antinode
+        char antinode = antinodeMap[row][col];
+
+        // If it's a '.' we don't have an antinode here yet
+        if (antinode == '.')
+        {
+            // Set the first antinode here
+            antinodeMap[row][col] = '0';
+            isUnique = true;
+        } else
+        {
+            // We already have an antinode here, let's increase the marker to show multiples
+            // Increment the char ID
+            antinodeMap[row][col]++;
+        }
+
+        return isUnique;
+    }
+    #endregion Day Eight
 }
