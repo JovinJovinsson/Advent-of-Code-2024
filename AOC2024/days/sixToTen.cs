@@ -543,6 +543,13 @@ public class SixToTen
             // False = Free Space Block
             bool isDataBlock = true;
 
+            // The below lists will be used to store the alternating data blocks & free space
+            // e.g. 12345 would result in existingDataBlocks having the values "0", "111", "22222"
+            // meanwhile freeSpaceBlocks would have ".." and "...."
+            // Each List<string> contains the IDs (e.g. 1, 1, 1 or ., ., .,)
+            List<List<string>> dataBlocks = new List<List<string>>();
+            List<List<string>> freeSpaceBlocks = new List<List<string>>();
+
             // This helps us insert the IDs of the data blocks
             int blockID = 0;
 
@@ -561,55 +568,56 @@ public class SixToTen
                         break;
                     }
 
-                    // If this is a data block, convert the ID to a string, otherwise it'll be free space (.)
-                    string blockIDString = isDataBlock ? blockID.ToString() : ".";
-
-                    // Build the data or free space block in the diskMap
-                    for (int i = 0; i < blockSize; i++)
+                    if (isDataBlock)
                     {
-                        diskMap.Add(blockIDString);
+                        dataBlocks.Add(CreateBlock(blockSize, blockID.ToString()));
+                        // Increment the ID by 1
+                        blockID++;
+                    } else
+                    {
+                        freeSpaceBlocks.Add(CreateBlock(blockSize));
                     }
-
-                    // If it was a data block, increment the ID by 1
-                    blockID += isDataBlock ? 1 : 0;
 
                     // Alternate the flag between data & free space
                     isDataBlock = !isDataBlock;
                 }
             }
 
+            // Combine the dataBlock and freeSpaceBlocks lists into a singular diskMap
+            diskMap = BuildDiskMap(ref dataBlocks, ref freeSpaceBlocks);
+
             // Show the current state
             OutputDiskMap(ref diskMap, "Fragmented Data");
 
-            // k will count up while i counts down, k may go up faster depending on the free blocks
-            int k = 0;
-            for (int i = diskMap.Count - 1; i >= 0; i--)
-            {
-                // If the current block is a free space let's not move it
-                if (diskMap[i] == ".") { continue; }
+            // // k will count up while i counts down, k may go up faster depending on the free blocks
+            // int k = 0;
+            // for (int i = diskMap.Count - 1; i >= 0; i--)
+            // {
+            //     // If the current block is a free space let's not move it
+            //     if (diskMap[i] == ".") { continue; }
 
-                // If k is now greater than i, it means all blocks have been defragged
-                if (k >= i) { break; }
+            //     // If k is now greater than i, it means all blocks have been defragged
+            //     if (k >= i) { break; }
 
-                // Flag to end the do while loop
-                bool bitFragmented = true;
-                do
-                {
-                    // If we enter here, it's a free space block ready to move out data
-                    if (diskMap[k] == ".")
-                    {
-                        // Move our data into the freespace block, use "new" to make sure we don't have issues
-                        diskMap[k] = new string(diskMap[i]);
-                        // Make this data block a freespace block now
-                        diskMap[i] = ".";
+            //     // Flag to end the do while loop
+            //     bool bitFragmented = true;
+            //     do
+            //     {
+            //         // If we enter here, it's a free space block ready to move out data
+            //         if (diskMap[k] == ".")
+            //         {
+            //             // Move our data into the freespace block, use "new" to make sure we don't have issues
+            //             diskMap[k] = new string(diskMap[i]);
+            //             // Make this data block a freespace block now
+            //             diskMap[i] = ".";
                         
-                        // Stop looking for the next free space
-                        bitFragmented = false;
-                    }
+            //             // Stop looking for the next free space
+            //             bitFragmented = false;
+            //         }
 
-                    k++;
-                } while (bitFragmented);
-            }
+            //         k++;
+            //     } while (bitFragmented);
+            // }
 
             // Calculate the check sum
             Int64 checkSum = CalculateCheckSum(ref diskMap);
@@ -651,6 +659,66 @@ public class SixToTen
         }
 
         return checkSum;
+    }
+
+    /// <summary>
+    /// Simple function that creates a list of bits for a block based on parameters
+    /// </summary>
+    /// <param name="size">The block size (count of bits)</param>
+    /// <param name="blockID">The block IDs (or . for free space)</param>
+    /// <returns></returns>
+    private List<string> CreateBlock(int size, string blockID = ".")
+    {
+        // Holding list for the block
+        List<string> block = new List<string>();
+
+        // Add as many blockIDs as required to the block
+        for (int i = 0; i < size; i++)
+        {
+            block.Add(blockID);
+        }
+
+        return block;
+    }
+
+    /// <summary>
+    /// Combines the two lists of dataBlocks and freeSpace blocks together in order (alternating)
+    /// </summary>
+    /// <param name="dataBlocks">The list of data blocks</param>
+    /// <param name="freeSpaceBlocks">The list of free space blocks</param>
+    /// <returns>The combined diskMap list</returns>
+    private List<string> BuildDiskMap(ref List<List<string>> dataBlocks, ref List<List<string>> freeSpaceBlocks)
+    {
+        // Holding list for the diskMap
+        List<string> diskMap = new List<string>();
+        // This will allow us to ensure we don't exceed the overall count of blocks in the list
+        int total = 0;
+        // i will be used for each list of blocks so they're added in order
+        for (int i = 0; total < dataBlocks.Count + freeSpaceBlocks.Count; i++)
+        {
+            // Secondary check to make sure we aren't adding a block that doesn't exist
+            if (i < dataBlocks.Count)
+            {
+                // Add each individual identifier to the diskMap
+                for (int j = 0; j < dataBlocks[i].Count; j++)
+                {
+                    diskMap.Add(dataBlocks[i][j]);
+                }
+                // Increment the total
+                total++;
+            }
+
+            // Same as above
+            if (i < freeSpaceBlocks.Count)
+            {
+                for (int j = 0; j < freeSpaceBlocks[i].Count; j++)
+                {
+                    diskMap.Add(freeSpaceBlocks[i][j]);
+                }
+                total++;
+            }
+        }
+        return diskMap;
     }
     #endregion
 }
