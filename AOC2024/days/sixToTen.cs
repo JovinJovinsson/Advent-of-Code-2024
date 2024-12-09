@@ -526,7 +526,7 @@ public class SixToTen
     public void DayNine()
     {
         // The input files
-        // string fileName = "assets/AOC2024.9.Test-Input.txt";
+        // string fileName = "assets/AOC2024.9.Test-Input copy.txt";
         string fileName = "assets/AOC2024.9.Input.txt";
 
         // This will be the holistic diskmap with both data & free space blocks
@@ -585,44 +585,70 @@ public class SixToTen
 
             // Combine the dataBlock and freeSpaceBlocks lists into a singular diskMap
             diskMap = BuildDiskMap(ref dataBlocks, ref freeSpaceBlocks);
-
-            // Show the current state
+            // Show the initial state
             OutputDiskMap(ref diskMap, "Fragmented Data");
 
-            // // k will count up while i counts down, k may go up faster depending on the free blocks
-            // int k = 0;
-            // for (int i = diskMap.Count - 1; i >= 0; i--)
-            // {
-            //     // If the current block is a free space let's not move it
-            //     if (diskMap[i] == ".") { continue; }
+            // Starting with the last data block, iterate backwards to try and move it
+            for (int i = dataBlocks.Count - 1; i >= 0; i--)
+            {
+                // Start looking for space in the earliest freespace block
+                for (int j = 0; j < freeSpaceBlocks.Count; j++)
+                {
+                    // If the freespace block is higher than the data block we'd be moving it later not earlier
+                    if (i <= j) { break; }
 
-            //     // If k is now greater than i, it means all blocks have been defragged
-            //     if (k >= i) { break; }
+                    // If there is no free space, ignore it
+                    if (freeSpaceBlocks[j].Count < 1) { continue; }
 
-            //     // Flag to end the do while loop
-            //     bool bitFragmented = true;
-            //     do
-            //     {
-            //         // If we enter here, it's a free space block ready to move out data
-            //         if (diskMap[k] == ".")
-            //         {
-            //             // Move our data into the freespace block, use "new" to make sure we don't have issues
-            //             diskMap[k] = new string(diskMap[i]);
-            //             // Make this data block a freespace block now
-            //             diskMap[i] = ".";
-                        
-            //             // Stop looking for the next free space
-            //             bitFragmented = false;
-            //         }
+                    // Check if this is a fresh free space block denoted by a . in the 1st position
+                    bool isFreshBlock = freeSpaceBlocks[j][0] == "." ? true : false;
 
-            //         k++;
-            //     } while (bitFragmented);
-            // }
+                    // If it is a fresh block, but there isn't enough space, let's check the next one
+                    if (isFreshBlock && dataBlocks[i].Count > freeSpaceBlocks[j].Count) { continue; }
+
+                    // Some holders for when it's not a fresh block
+                    int countActualFree = 0;
+                    int indexOffset = -1;
+                    // If it's not a fresh block, let's see if there's some space to squeeze into
+                    if (!isFreshBlock)
+                    {
+                        // Iterate over each bit and check if it's free
+                        for (int k = 0; k < freeSpaceBlocks[j].Count; k++)
+                        {
+                            // If it's got a value, skip it, it's used up
+                            if (freeSpaceBlocks[j][k] != ".") { continue; }
+
+                            // We got here, so it's a free bit
+                            countActualFree++;
+                            // If this is the first spot of the free bits in the space, update our index offset
+                            if (indexOffset == -1) { indexOffset = k; }
+                        }
+
+                        // Turns out it wasn't big eough afterall, onto the next one
+                        if (dataBlocks[i].Count > countActualFree) { continue; }
+                    }
+
+                    // We can move out block into this space!
+                    // If our index offset is still -1, set it to 0
+                    if (indexOffset == -1) { indexOffset = 0; }
+
+                    // Now, let's iterate over each it and move it across
+                    for (int k = 0; k < dataBlocks[i].Count; k++)
+                    {
+                        freeSpaceBlocks[j][indexOffset + k] = new string(dataBlocks[i][k]);
+                        dataBlocks[i][k] = ".";
+                    }
+                }
+            }
+            // Rebuild the disk map
+            diskMap = BuildDiskMap(ref dataBlocks, ref freeSpaceBlocks);
+
+            // Show the final state
+            OutputDiskMap(ref diskMap, "Defragmented Data");
 
             // Calculate the check sum
-            Int64 checkSum = CalculateCheckSum(ref diskMap);
-
-            OutputDiskMap(ref diskMap, "Defragmented Data (Checksum: " + checkSum + ")");
+            Int128 checkSum = CalculateCheckSum(ref diskMap);
+            Console.WriteLine("Checksum: {0}", checkSum);
         }
     }
 
@@ -644,18 +670,20 @@ public class SixToTen
     /// </summary>
     /// <param name="diskMap">The list of strings that represent the diskMap</param>
     /// <returns>The checkSum</returns>
-    private Int64 CalculateCheckSum(ref List<string> diskMap)
+    private Int128 CalculateCheckSum(ref List<string> diskMap)
     {
-        Int64 checkSum = 0;
+        Int128 checkSum = 0;
 
         // Iterate over every bit in the diskMap
         for (int i = 0; i < diskMap.Count; i++)
         {
+            string currentBit = diskMap[i];
+
             // If it's free space let's stop calculating as it's only free after that
-            if (diskMap[i] == ".") { break; }
+            if (currentBit == ".") { continue; }
 
             // Parse the blockID into an Int and multiply by the index before adding
-            checkSum += Int32.Parse(diskMap[i]) * i;
+            checkSum += Int32.Parse(currentBit) * i;
         }
 
         return checkSum;
