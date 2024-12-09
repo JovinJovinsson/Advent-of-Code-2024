@@ -1,8 +1,10 @@
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.IO.MemoryMappedFiles;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
+using System.Xml.Schema;
 
 public class SixToTen
 {
@@ -515,4 +517,163 @@ public class SixToTen
         return isUnique;
     }
     #endregion Day Eight
+
+    #region Day Nine
+    /// <summary>
+    /// Solves the Day 9 portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/9
+    /// </summary>
+    public void DayNine()
+    {
+        // The input files
+        // string fileName = "assets/AOC2024.9.Test-Input.txt";
+        string fileName = "assets/AOC2024.9.Input.txt";
+
+        // The below lists will be used to store the alternating data blocks & free space
+        // e.g. 12345 would result in existingDataBlocks having the values "0", "111", "22222"
+        // meanwhile freeSpaceBlocks would have ".." and "...."
+        // Each List<string> contains the IDs (e.g. 1, 1, 1 or ., ., .,)
+        List<List<string>> dataBlocks = new List<List<string>>();
+        List<List<string>> freeSpaceBlocks = new List<List<string>>();
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+
+            // This helps us keep track of what block we're processing
+            // True = Data Block
+            // False = Free Space Block
+            bool isDataBlock = true;
+
+            // This helps us insert the IDs of the data blocks
+            int blockID = 0;
+
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                foreach (char blockChar in currentLine)
+                {
+                    int block = 0;
+
+                    if (!Int32.TryParse(blockChar.ToString(), out block))
+                    { 
+                        Console.WriteLine("Error parsing {0}", blockChar);
+                        break;
+                    }
+
+                    if (isDataBlock)
+                    {
+                        dataBlocks.Add(CreateBlock(block, blockID.ToString()));
+                        blockID++;
+                    } else
+                    {
+                        freeSpaceBlocks.Add(CreateBlock(block, "."));
+                    }
+
+                    isDataBlock = !isDataBlock;
+                }
+            }
+
+            List<string> diskMap = BuildDiskMap(ref dataBlocks, ref freeSpaceBlocks);
+            OutputDiskMap(ref diskMap, "Fragmented Data");
+
+            int k = 0;
+            for (int i = diskMap.Count - 1; i >= 0; i--)
+            {
+                string bitCheckFree = diskMap[k];
+                string bitToMove = diskMap[i];
+
+                if (diskMap[i] == ".") { continue; }
+
+                if (k >= i) { break; }
+
+                bool bitFragmented = true;
+                do
+                {
+                    bitCheckFree = diskMap[k];
+
+                    if (diskMap[k] == ".")
+                    {
+                        diskMap[k] = new string(diskMap[i]);
+                        diskMap[i] = ".";
+                        
+                        bitFragmented = false;
+                    }
+
+                    k++;
+                } while (bitFragmented);
+            }
+
+            Int64 checkSum = CalculateCheckSum(ref diskMap);
+
+            OutputDiskMap(ref diskMap, "Defragmented Data (Checksum: " + checkSum + ")");
+        }
+    }
+
+    private List<string> CreateBlock(int size, string blockID)
+    {
+        List<string> block = new List<string>();
+
+        for (int i = 0; i < size; i++)
+        {
+            block.Add(blockID);
+        }
+
+        return block;
+    }
+
+    private List<string> BuildDiskMap(ref List<List<string>> dataBlocks, ref List<List<string>> freeSpaceBlocks)
+    {
+        List<string> diskMap = new List<string>();
+        int total = 0;
+        for (int i = 0; total < dataBlocks.Count + freeSpaceBlocks.Count; i++)
+        {
+            if (i < dataBlocks.Count)
+            {
+                // fragmentedData += string.Join("", dataBlocks[i].ToArray());
+                for (int j = 0; j < dataBlocks[i].Count; j++)
+                {
+                    diskMap.Add(dataBlocks[i][j]);
+                }
+                total++;
+            }
+
+            if (i < freeSpaceBlocks.Count)
+            {
+                // fragmentedData += string.Join("", freeSpaceBlocks[i].ToArray());
+                for (int j = 0; j < freeSpaceBlocks[i].Count; j++)
+                {
+                    diskMap.Add(freeSpaceBlocks[i][j]);
+                }
+                total++;
+            }
+        }
+
+        return diskMap;
+    }
+
+    private void OutputDiskMap(ref List<string> diskMap, string title)
+    {
+        Console.WriteLine("--------------------------------");
+        Console.WriteLine("--- {0} Disk Map ---", title);
+        Console.WriteLine("--------------------------------");
+        Console.WriteLine(string.Join("", diskMap.ToArray()));
+    }
+
+    private Int64 CalculateCheckSum(ref List<string> diskMap)
+    {
+        Int64 checkSum = 0;
+
+        for (int i = 0; i < diskMap.Count; i++)
+        {
+            if (diskMap[i] == ".") { break; }
+
+            checkSum += Int32.Parse(diskMap[i]) * i;
+        }
+
+        return checkSum;
+    }
+    #endregion
 }
