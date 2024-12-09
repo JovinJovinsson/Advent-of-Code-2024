@@ -529,12 +529,8 @@ public class SixToTen
         // string fileName = "assets/AOC2024.9.Test-Input.txt";
         string fileName = "assets/AOC2024.9.Input.txt";
 
-        // The below lists will be used to store the alternating data blocks & free space
-        // e.g. 12345 would result in existingDataBlocks having the values "0", "111", "22222"
-        // meanwhile freeSpaceBlocks would have ".." and "...."
-        // Each List<string> contains the IDs (e.g. 1, 1, 1 or ., ., .,)
-        List<List<string>> dataBlocks = new List<List<string>>();
-        List<List<string>> freeSpaceBlocks = new List<List<string>>();
+        // This will be the holistic diskmap with both data & free space blocks
+        List<string> diskMap = new List<string>();
 
         // Read the data in from the text file
         using (StreamReader streamReader = new StreamReader(fileName))
@@ -555,50 +551,59 @@ public class SixToTen
             {
                 foreach (char blockChar in currentLine)
                 {
-                    int block = 0;
+                    // Holder for the size of the 
+                    int blockSize = 0;
 
-                    if (!Int32.TryParse(blockChar.ToString(), out block))
+                    // Parse the char into an string then Int
+                    if (!Int32.TryParse(blockChar.ToString(), out blockSize))
                     { 
                         Console.WriteLine("Error parsing {0}", blockChar);
                         break;
                     }
 
-                    if (isDataBlock)
+                    // If this is a data block, convert the ID to a string, otherwise it'll be free space (.)
+                    string blockIDString = isDataBlock ? blockID.ToString() : ".";
+
+                    // Build the data or free space block in the diskMap
+                    for (int i = 0; i < blockSize; i++)
                     {
-                        dataBlocks.Add(CreateBlock(block, blockID.ToString()));
-                        blockID++;
-                    } else
-                    {
-                        freeSpaceBlocks.Add(CreateBlock(block, "."));
+                        diskMap.Add(blockIDString);
                     }
 
+                    // If it was a data block, increment the ID by 1
+                    blockID += isDataBlock ? 1 : 0;
+
+                    // Alternate the flag between data & free space
                     isDataBlock = !isDataBlock;
                 }
             }
 
-            List<string> diskMap = BuildDiskMap(ref dataBlocks, ref freeSpaceBlocks);
+            // Show the current state
             OutputDiskMap(ref diskMap, "Fragmented Data");
 
+            // k will count up while i counts down, k may go up faster depending on the free blocks
             int k = 0;
             for (int i = diskMap.Count - 1; i >= 0; i--)
             {
-                string bitCheckFree = diskMap[k];
-                string bitToMove = diskMap[i];
-
+                // If the current block is a free space let's not move it
                 if (diskMap[i] == ".") { continue; }
 
+                // If k is now greater than i, it means all blocks have been defragged
                 if (k >= i) { break; }
 
+                // Flag to end the do while loop
                 bool bitFragmented = true;
                 do
                 {
-                    bitCheckFree = diskMap[k];
-
+                    // If we enter here, it's a free space block ready to move out data
                     if (diskMap[k] == ".")
                     {
+                        // Move our data into the freespace block, use "new" to make sure we don't have issues
                         diskMap[k] = new string(diskMap[i]);
+                        // Make this data block a freespace block now
                         diskMap[i] = ".";
                         
+                        // Stop looking for the next free space
                         bitFragmented = false;
                     }
 
@@ -606,54 +611,18 @@ public class SixToTen
                 } while (bitFragmented);
             }
 
+            // Calculate the check sum
             Int64 checkSum = CalculateCheckSum(ref diskMap);
 
             OutputDiskMap(ref diskMap, "Defragmented Data (Checksum: " + checkSum + ")");
         }
     }
 
-    private List<string> CreateBlock(int size, string blockID)
-    {
-        List<string> block = new List<string>();
-
-        for (int i = 0; i < size; i++)
-        {
-            block.Add(blockID);
-        }
-
-        return block;
-    }
-
-    private List<string> BuildDiskMap(ref List<List<string>> dataBlocks, ref List<List<string>> freeSpaceBlocks)
-    {
-        List<string> diskMap = new List<string>();
-        int total = 0;
-        for (int i = 0; total < dataBlocks.Count + freeSpaceBlocks.Count; i++)
-        {
-            if (i < dataBlocks.Count)
-            {
-                // fragmentedData += string.Join("", dataBlocks[i].ToArray());
-                for (int j = 0; j < dataBlocks[i].Count; j++)
-                {
-                    diskMap.Add(dataBlocks[i][j]);
-                }
-                total++;
-            }
-
-            if (i < freeSpaceBlocks.Count)
-            {
-                // fragmentedData += string.Join("", freeSpaceBlocks[i].ToArray());
-                for (int j = 0; j < freeSpaceBlocks[i].Count; j++)
-                {
-                    diskMap.Add(freeSpaceBlocks[i][j]);
-                }
-                total++;
-            }
-        }
-
-        return diskMap;
-    }
-
+    /// <summary>
+    /// Simple function for outputting the diskMap
+    /// </summary>
+    /// <param name="diskMap">The list of strings that represent the diskMap</param>
+    /// <param name="title">The title of the diskMap</param>
     private void OutputDiskMap(ref List<string> diskMap, string title)
     {
         Console.WriteLine("--------------------------------");
@@ -662,14 +631,22 @@ public class SixToTen
         Console.WriteLine(string.Join("", diskMap.ToArray()));
     }
 
+    /// <summary>
+    /// A simple function for calculating the CheckSum based on the challenge.
+    /// </summary>
+    /// <param name="diskMap">The list of strings that represent the diskMap</param>
+    /// <returns>The checkSum</returns>
     private Int64 CalculateCheckSum(ref List<string> diskMap)
     {
         Int64 checkSum = 0;
 
+        // Iterate over every bit in the diskMap
         for (int i = 0; i < diskMap.Count; i++)
         {
+            // If it's free space let's stop calculating as it's only free after that
             if (diskMap[i] == ".") { break; }
 
+            // Parse the blockID into an Int and multiply by the index before adding
             checkSum += Int32.Parse(diskMap[i]) * i;
         }
 
