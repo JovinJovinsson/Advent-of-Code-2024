@@ -855,23 +855,23 @@ public class SixToTen
             {
                 // OutputTopographicMap(ref currentTrail, "Trail Found");
 
-                bool alreadyFound = false;
+                // bool alreadyFound = false;
 
-                foreach (List<int> peak  in discoveredPeaks)
-                {
-                    int peakX = peak[0];
-                    int peakY = peak[1];
-                    int nextX = next[0];
-                    int nextY = next[1];
+                // foreach (List<int> peak  in discoveredPeaks)
+                // {
+                //     int peakX = peak[0];
+                //     int peakY = peak[1];
+                //     int nextX = next[0];
+                //     int nextY = next[1];
 
-                    if (peak[0] == next[0] && peak[1] == next[1])
-                    {
-                        alreadyFound = true;
-                        break;
-                    }
-                }
+                //     if (peak[0] == next[0] && peak[1] == next[1])
+                //     {
+                //         alreadyFound = true;
+                //         break;
+                //     }
+                // }
 
-                if (alreadyFound) { continue; }
+                // if (alreadyFound) { continue; }
 
                 discoveredPeaks.Add(next);
                 currentScore++;
