@@ -749,4 +749,147 @@ public class SixToTen
         return diskMap;
     }
     #endregion
+
+    #region Day Ten
+    /// <summary>
+    /// Solves the Day 10 portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/10
+    /// </summary>
+    public void DayTen()
+    {
+        // The input files
+        // string fileName = "assets/AOC2024.10.Test-Input.txt";
+        string fileName = "assets/AOC2024.10.Input.txt";
+
+        List<List<int>> topographicMap = new List<List<int>>();
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                List<int> row = new List<int>();
+
+                foreach (char height in currentLine)
+                {
+                    int heightInt = Int32.Parse(height.ToString());
+
+                    row.Add(heightInt);    
+                }
+
+                topographicMap.Add(row);
+            }
+
+            OutputTopographicMap(ref topographicMap, "Map");
+
+            List<List<int>> trailheads = FindTrailheads(ref topographicMap);
+
+            int sumOfTrailheadScores = 0;
+
+            foreach (List<int> trailhead in trailheads)
+            {
+                List<List<int>> discoveredPeaks = new List<List<int>>();
+                FindTrails(ref topographicMap, trailhead, 1, new List<List<int>>(), ref discoveredPeaks);
+
+                sumOfTrailheadScores += discoveredPeaks.Count;
+            }
+
+            Console.WriteLine("Trails Found: {0}", sumOfTrailheadScores);
+        }
+    }
+
+    // <summary>
+    /// Simple function for outputting the diskMap
+    /// </summary>
+    /// <param name="diskMap">The list of strings that represent the diskMap</param>
+    /// <param name="title">The title of the diskMap</param>
+    private void OutputTopographicMap(ref List<List<int>> topographicMap, string title)
+    {
+        Console.WriteLine("--------------------------------");
+        Console.WriteLine("--- {0} ---", title);
+        Console.WriteLine("--------------------------------");
+        foreach (List<int> row in topographicMap)
+        {
+            Console.WriteLine(string.Join("", row.ToArray()));
+        }
+    }
+
+    private List<List<int>> FindTrailheads(ref List<List<int>> topographicMap)
+    {
+        List<List<int>> trailheads = new List<List<int>>();
+
+        for (int i = 0; i < topographicMap.Count; i++)
+        {
+            for (int j = 0; j < topographicMap[i].Count; j++)
+            {
+                if (topographicMap[i][j] != 0) { continue; }
+
+                trailheads.Add(new List<int>() { i, j });
+            }
+        }
+
+        return trailheads;
+    }
+
+    private void FindTrails(ref List<List<int>> topographicMap, List<int> position, int targetHeight, List<List<int>> currentTrail, ref List<List<int>> discoveredPeaks)
+    {
+        List<List<int>> possibleNextSteps = new List<List<int>> { new List<int> { -1, 0 }, new List<int> { 1, 0 }, new List<int> { 0, -1 }, new List<int> { 0, 1 } };
+
+        int currentScore = 0;
+
+        for (int i = 0; i < possibleNextSteps.Count; i++)
+        {
+            List<int> next = Add(position, possibleNextSteps[i]);
+
+            if (PositionOutOfBounds(topographicMap.Count, topographicMap[position[0]].Count, next)) { continue; }
+
+            int nextHeight = topographicMap[next[0]][next[1]];
+
+            if (nextHeight != targetHeight) { continue; }
+
+            if (nextHeight == 9)
+            {
+                // OutputTopographicMap(ref currentTrail, "Trail Found");
+
+                bool alreadyFound = false;
+
+                foreach (List<int> peak  in discoveredPeaks)
+                {
+                    int peakX = peak[0];
+                    int peakY = peak[1];
+                    int nextX = next[0];
+                    int nextY = next[1];
+
+                    if (peak[0] == next[0] && peak[1] == next[1])
+                    {
+                        alreadyFound = true;
+                        break;
+                    }
+                }
+
+                if (alreadyFound) { continue; }
+
+                discoveredPeaks.Add(next);
+                currentScore++;
+            } else
+            {
+                FindTrails(ref topographicMap, next, targetHeight + 1, currentTrail, ref discoveredPeaks);
+            }
+        }
+    }
+
+    private List<int> Add(List<int> left, List<int> right)
+    {
+        return new List<int> { left[0] + right[0], left[1] + right[1] };
+    }
+
+    private bool PositionOutOfBounds(int rows, int cols, List<int> position)
+    {
+        return (position[0] < 0 || position[0] >= rows || position[1] < 0 || position[1] >= cols) ? true : false;
+    }
+    #endregion
 }
