@@ -16,8 +16,8 @@ public class SixToTen
     public void DaySix()
     {
         // The input files
-        string fileName = "assets/AOC2024.6.Input.txt";
-        // string fileName = "assets/AOC2024.6.Test-Input.txt";
+        string fileName = "assets/sixToTen/AOC2024.6.Input.txt";
+        // string fileName = "assets/sixToTen/AOC2024.6.Test-Input.txt";
 
         // List of lists to map out the room and the guard positions
         // The List<List> portion contains the Y traversing (up/down)
@@ -201,8 +201,8 @@ public class SixToTen
     public void DaySeven()
     {
         // The input files
-        // string fileName = "assets/AOC2024.7.Test-Input.txt";
-        string fileName = "assets/AOC2024.7.Input.txt";
+        // string fileName = "assets/sixToTen/AOC2024.7.Test-Input.txt";
+        string fileName = "assets/sixToTen/AOC2024.7.Input.txt";
 
         // Count the number of tests performed
         Dictionary<Int64, List<Int64>> resultAndOperands = new Dictionary<Int64, List<Int64>>();
@@ -338,8 +338,8 @@ public class SixToTen
     public void DayEight()
     {
         // The input files
-        // string fileName = "assets/AOC2024.8.Test-Input.txt";
-        string fileName = "assets/AOC2024.8.Input.txt";
+        // string fileName = "assets/sixToTen/AOC2024.8.Test-Input.txt";
+        string fileName = "assets/sixToTen/AOC2024.8.Input.txt";
 
         // List of List of chars representing the map of the town
         List<List<char>> emitterMap = new List<List<char>>();
@@ -526,8 +526,8 @@ public class SixToTen
     public void DayNine()
     {
         // The input files
-        // string fileName = "assets/AOC2024.9.Test-Input copy.txt";
-        string fileName = "assets/AOC2024.9.Input.txt";
+        // string fileName = "assets/sixToTen/AOC2024.9.Test-Input copy.txt";
+        string fileName = "assets/sixToTen/AOC2024.9.Input.txt";
 
         // This will be the holistic diskmap with both data & free space blocks
         List<string> diskMap = new List<string>();
@@ -762,8 +762,8 @@ public class SixToTen
     public void DayTen()
     {
         // The input files
-        // string fileName = "assets/AOC2024.10.Test-Input.txt";
-        string fileName = "assets/AOC2024.10.Input.txt";
+        // string fileName = "assets/sixToTen/AOC2024.10.Test-Input.txt";
+        string fileName = "assets/sixToTen/AOC2024.10.Input.txt";
 
         // List of lists is rows<colums>
         List<List<int>> topographicMap = new List<List<int>>();
