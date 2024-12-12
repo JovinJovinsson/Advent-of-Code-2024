@@ -1,3 +1,8 @@
+using System.Numerics;
+using System.Runtime.Serialization.Formatters;
+using System.Security;
+using Microsoft.Win32.SafeHandles;
+
 public class ElevenToFifteen
 {
     #region Day Eleven
@@ -183,6 +188,208 @@ public class ElevenToFifteen
 
         // Return the total number of stones after all transformations.
         return stoneCounts.Values.Sum();
+    }
+    #endregion
+
+    #region Day Twelve
+    /// <summary>
+    /// Solves the Day 12 portion of the AOC 2024 challenge.
+    /// https://adventofcode.com/2024/day/12
+    /// </summary>
+    public void DayTwelve()
+    {
+        // Flag to quickly switch inputs (and possibly other things)
+        bool usingTestInput = true;
+
+        // The input files
+        string fileName = "/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/assets/elevenToFifteen/AOC2024.12.";
+        fileName += usingTestInput ? "Test-Input copy.txt" : "Input.txt";
+
+        List<List<char>> gardenMap = new List<List<char>>();
+
+        List<char> uniquePlants = new List<char>();
+
+        // Read the data in from the text file
+        using (StreamReader streamReader = new StreamReader(fileName))
+        {
+            // Placeholder for the current line of the tile
+            string currentLine;
+
+            // currentLine will be null when the StreamReader reaches the end of file
+            while((currentLine = streamReader.ReadLine()) != null)
+            {
+                gardenMap.Add(currentLine.ToCharArray().ToList());
+
+                foreach (char c in currentLine)
+                {
+                    if (uniquePlants.Contains(c)) { continue; }
+
+                    uniquePlants.Add(c);
+                }
+                // if (rowLength == 0)
+                // {
+                //     // Get the length of the line
+                //     rowLength = currentLine.Length; 
+                // }
+
+                // // Create an array of the length
+                // char[] rowArray = new char[rowLength];
+
+                // for (int j = 0; j < rowLength; j++)
+                // {
+                //     if (!gardenPlots.ContainsKey(currentLine[j]))
+                //     {
+                //         // Convert the array to a list, this will ensure we can store the correct amount of plants
+                //         List<char> row = rowArray.ToList();
+
+                //         List<List<char>> freshPlot = new List<List<char>>();
+
+                //         for (int k = 0; k <= i; k++)
+                //         {
+                //             freshPlot.Add(new List<char>(row));
+                //         }
+
+                //         gardenPlots.Add(row[j], freshPlot);
+                //     }
+
+                //     // if (gardenPlots)
+                // }
+
+                // i++;
+            }
+        }
+
+        int numberOfRows = gardenMap.Count;
+        int numberOfOCols = gardenMap[0].Count;
+
+        // List<int>[0] = Area of plant
+        // List<int>[1] = perimeter of plant
+        Dictionary<char, List<int>> plotCosts = new Dictionary<char, List<int>>();
+
+        // This dictionary is tracked like so:
+        // char = the plant type
+        // List<List<char> the map of the plots for that plant with each nested List<char> being a row in the map
+        Dictionary<char, List<List<char>>> gardenPlots = new Dictionary<char, List<List<char>>>();
+
+        Dictionary<char, List<List<int>>> gardenFences = new Dictionary<char,List<List<int>>>();
+
+        int gardenCost = 0;
+
+        foreach (char plant in uniquePlants)
+        {
+            List<List<char>> plotsForPlant = FindPlotsForPlant(gardenMap, plant, out int area);
+            List<List<int>> fencesForPlant = GetPerimeterForPlant(ref plotsForPlant, plant, out int perimeter);
+
+            gardenPlots.Add(plant, plotsForPlant);
+            gardenFences.Add(plant, fencesForPlant);
+
+            List<int> plantCost = new List<int>();
+            plantCost.Add(area);
+            plantCost.Add(perimeter);
+
+            gardenCost += area * perimeter;
+
+            OutputGardenMapForPlant(plotsForPlant, plant);
+            Console.WriteLine("Cost for Plant: {0}", (area * perimeter));
+        }
+
+        Console.WriteLine("---------------");
+        Console.WriteLine("Total Cost: {0}", gardenCost);
+        Console.WriteLine("---------------");
+    }
+
+    private List<List<char>> FindPlotsForPlant(List<List<char>> gardenMap, char plant, out int area)
+    {
+        List<List<char>> plotsFound = new List<List<char>>();
+
+        area = 0;
+
+        for (int i = 0; i < gardenMap.Count; i++)
+        {
+            List<char> row = new List<char>( gardenMap[i] );
+
+            for (int j = 0; j < row.Count; j++)
+            {
+                if (row[j] == plant)
+                { 
+                    area++;
+                    continue; 
+                }
+
+                row[j] = '.';
+            }
+
+            plotsFound.Add(row);
+        }
+
+        return plotsFound;
+    }
+
+    public List<List<int>> GetPerimeterForPlant(ref List<List<char>> plotsForPlant, char plant, out int perimeter)
+    {
+        List<List<int>> fencesForPlant = new List<List<int>>();
+
+        perimeter = 0;
+
+        List<List<int>> offsets = new List<List<int>>{ new List<int> { -1, 0 }, new List<int> { 0, 1 }, new List<int> { 1, 0 }, new List<int> { 0, -1} };
+
+        for (int i = 0; i < plotsForPlant.Count; i++)
+        {
+            int[] sizer = new int[plotsForPlant[i].Count];
+            List<int> fences = sizer.ToList();;
+
+            for (int j = 0; j < plotsForPlant[i].Count; j++)
+            {
+                fences[j] = 0;
+
+                if (plotsForPlant[i][j] != plant) { continue; }
+
+                foreach (List<int> offset in offsets)
+                {
+                    List<int> location = Add(new List<int> { i, j }, offset);
+
+                    bool invalidLocation = false;
+                    if (location[0] < 0) { fences[j]++; invalidLocation = true; }
+                    if (location[0] >= plotsForPlant.Count) { fences[j]++; invalidLocation = true; }
+                    if (location[1] < 0) { fences[j]++; invalidLocation = true; }
+                    if (location[1] >= plotsForPlant[i].Count) { fences[j]++; invalidLocation = true; }
+
+                    if (invalidLocation) { continue; }
+
+                    char nextPlant = plotsForPlant[location[0]][location[1]];
+
+                    if (nextPlant == plant) { continue; }
+
+                    fences[j]++;
+                }
+
+                perimeter += fences[j];
+            }
+
+            fencesForPlant.Add(fences);
+        }
+
+        return fencesForPlant;
+    }
+
+    private void OutputGardenMapForPlant(List<List<char>> plots, char plant)
+    {
+        Console.WriteLine("\n\n---- Plots for Plant: {0} ----", plant);
+        for (int i = 0; i < plots.Count; i++)
+        {
+            Console.WriteLine(i.ToString().PadLeft(3, '0') + ": " + string.Join("", plots[i].ToArray()));
+        }
+    }
+
+    /// <summary>
+    /// Simple function to add 2 Lists of ints together
+    /// </summary>
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns></returns>
+    private List<int> Add(List<int> left, List<int> right)
+    {
+        return new List<int> { left[0] + right[0], left[1] + right[1] };
     }
     #endregion
 }

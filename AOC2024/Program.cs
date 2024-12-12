@@ -15,7 +15,8 @@
 // sixToTen.DayTen();
 
 ElevenToFifteen elevenToFifteen = new ElevenToFifteen();
-elevenToFifteen.DayEleven();
+// elevenToFifteen.DayEleven();
+elevenToFifteen.DayTwelve();
 
 #region Skeleton
 // #region Day Nine
@@ -25,9 +26,12 @@ elevenToFifteen.DayEleven();
     // /// </summary>
     // public void DayNine()
     // {
+    //     // Flag to quickly switch inputs (and possibly other things)
+           // bool usingTestInput = false;
+
     //     // The input files
-    //     // string fileName = "assets/sixToTen/AOC2024.9.Test-Input copy.txt";
-    //     string fileName = "assets/sixToTen/AOC2024.9.Input.txt";
+           // string fileName = "/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/assets/elevenToFifteen/AOC2024.11.";
+           // fileName += usingTestInput ? "Test-Input.txt" : "Input.txt";
 
     //     // Read the data in from the text file
     //     using (StreamReader streamReader = new StreamReader(fileName))
