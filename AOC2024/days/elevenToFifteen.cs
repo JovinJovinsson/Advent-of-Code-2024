@@ -14,7 +14,7 @@ public class ElevenToFifteen
         string fileName = "/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/assets/elevenToFifteen/AOC2024.11.";
         fileName += usingTestInput ? "Test-Input.txt" : "Input.txt";
 
-        List<string> stoneLabels = new List<string>();
+        List<long> stoneLabels = new List<long>();
 
         // Read the data in from the text file
         using (StreamReader streamReader = new StreamReader(fileName))
@@ -26,7 +26,12 @@ public class ElevenToFifteen
             while((currentLine = streamReader.ReadLine()) != null)
             {
                 // Split the string with spaces and add it to our list
-                stoneLabels = currentLine.Split(" ").ToList();
+                string[] stoneStrings = currentLine.Split(" ");
+
+                foreach (string stoneString in stoneStrings)
+                {
+                    stoneLabels.Add(long.Parse(stoneString));
+                }
             }
         }
 
@@ -36,25 +41,12 @@ public class ElevenToFifteen
         // int numberOfBlinks = usingTestInput ? 6 : 25;
         int numberOfBlinks = 75;
 
-        // Let's repeat our blinks to the required number
-        // for (int i = 0; i < numberOfBlinks; i++)
-        // {
-            // Update out list by blinking
-            // Blink(ref stoneLabels);
+        // long count = CalculateStoneCount(stoneLabels, numberOfBlinks);
+        long count = CalculateTotalStones(stoneLabels, numberOfBlinks);
 
-            long count = 0;
-
-            foreach (string stone in stoneLabels)
-            {
-                Blink(stone, numberOfBlinks, 0, ref count);
-            }
-
-            // OutputStones(ref stoneLabels, "After " + (i + 1) + " blinks:");
-
-            Console.WriteLine("=============================");
-            Console.WriteLine("=== Number of Stones: {0} ===", count);
-            Console.WriteLine("=============================");
-        // }
+        Console.WriteLine("=============================");
+        Console.WriteLine("=== Number of Stones: {0} ===", count);
+        Console.WriteLine("=============================");
     }
 
     /// <summary>
@@ -62,87 +54,135 @@ public class ElevenToFifteen
     /// </summary>
     /// <param name="stoneLabels"></param>
     /// <param name="title"></param>
-    private void OutputStones(ref List<string> stoneLabels, string title)
+    private void OutputStones(ref List<long> stoneLabels, string title)
     {
         Console.WriteLine("\n" + title);
         Console.WriteLine(string.Join(" ", stoneLabels.ToArray()));
     }
 
     /// <summary>
-    /// Processes the blinks based on the rules set out.
+    /// Calculates the number of stones after a given number of transformations.
     /// </summary>
-    /// <param name="stoneLabels">The list of stones</param>
-    private void Blink(ref List<string> stoneLabels)
+    /// <param name="filename">The input file containing the initial stones.</param>
+    /// <param name="transformations">The number of transformations to perform.</param>
+    /// <returns>The total number of stones after transformations.</returns>
+    private static long CalculateStoneCount(List<long> stones, int numberOfBlinks)
     {
-        // A new list to keep the order correct, we'll replace the ref list with this
-        List<string> afterBlink = new List<string>();
-
-        // Iterate over each stone
-        for (int i = 0; i < stoneLabels.Count; i++)
+        // Perform the transformations.
+        for (int i = 0; i < numberOfBlinks; i++)
         {
-            // Grab the current stone for ease
-            string stone = stoneLabels[i];
+            List<long> transformedStones = new List<long>();
 
-            // Get the string length
-            int length = stone.Length;
-
-            
-            if (stone == "0")
+            foreach (long stone in stones)
             {
-                // If it's a 0, add a 1 in it's place in the new list
-                afterBlink.Add("1");
-            } else if (stone.Length % 2 == 0) // It's even in number of digits, let's split it
-            {
-                // Get the midPoint of the stone, splits use length rather than indexes
-                int midPoint = stone.Length / 2;
-
-                // First stone, should be the first half of the number (0 - midPoint)
-                string firstString = stone.Substring(0, midPoint);
-                // Convert to a long which allows dropping of any leading 0's
-                long firstLong = long.Parse(firstString);
-                // Parse it to a string and add it to our new list
-                afterBlink.Add(firstLong.ToString());
-
-                // Repeat the above, but use the midPoint to the end to get the substring
-                string secondString = stone.Substring(midPoint, (length - midPoint));
-                long secondLong = long.Parse(secondString);
-                afterBlink.Add(secondLong.ToString());
-            } else 
-            {
-                // It didn't match the other rules, so lets multiply by 2024
-                long newStone = long.Parse(stone) * 2024;
-
-                afterBlink.Add(newStone.ToString());
+                if (stone == 0)
+                {
+                    // If the stone value is 0, replace it with 1.
+                    transformedStones.Add(1);
+                }
+                else if (stone.ToString().Length % 2 == 0)
+                {
+                    // Split even-length stones into two halves.
+                    string stoneStr = stone.ToString();
+                    string leftPart = stoneStr.Substring(0, stoneStr.Length / 2);
+                    string rightPart = stoneStr.Substring(stoneStr.Length / 2);
+                    transformedStones.Add(int.Parse(leftPart));
+                    transformedStones.Add(int.Parse(rightPart));
+                }
+                else
+                {
+                    // Multiply odd-length stones by 2024.
+                    transformedStones.Add(stone * 2024);
+                }
             }
+
+            // Update the list of stones for the next transformation.
+            stones = transformedStones;
         }
 
-        // Replace the PBR list with our new list
-        stoneLabels = afterBlink;
+        // Return the total number of stones after all transformations.
+        return stones.Count;
     }
 
-    private void Blink(string stone, int numberOfBlinks, int currentBlink, ref long countOfStones)
+    /// <summary>
+    /// Calculates the total number of stones, accounting for counts of identical stones.
+    /// </summary>
+    /// <param name="filename">The input file containing the initial stones.</param>
+    /// <param name="transformations">The number of transformations to perform.</param>
+    /// <returns>The total number of stones after transformations.</returns>
+    private static long CalculateTotalStones(List<long> stones, int numberOfBlinks)
     {
-        currentBlink++;
+        // Create a dictionary to store stone values and their counts.
+        Dictionary<long, long> stoneCounts = new Dictionary<long, long>();
 
-        if (currentBlink > numberOfBlinks) { countOfStones++; return; }
-
-        if (stone == "0")
+        foreach (long stone in stones)
         {
-            Blink("1", numberOfBlinks, currentBlink, ref countOfStones);            
-        } else if (stone.Length % 2 == 0) // It's even in number of digits, let's split it
-        {
-            int length = stone.Length;
-            int midPoint = length / 2;
-            
-            Blink(long.Parse(stone.Substring(0, midPoint)).ToString(), numberOfBlinks, currentBlink, ref countOfStones);
-            Blink(long.Parse(stone.Substring(midPoint, (length - midPoint))).ToString(), numberOfBlinks, currentBlink, ref countOfStones);
-        } else 
-        {
-            // It didn't match the other rules, so lets multiply by 2024
-            long newStone = long.Parse(stone) * 2024;
-
-            Blink(newStone.ToString(), numberOfBlinks, currentBlink, ref countOfStones);
+            if (!stoneCounts.ContainsKey(stone))
+            {
+                stoneCounts[stone] = 0;
+            }
+            stoneCounts[stone]++;
         }
+
+        // Perform the transformations.
+        for (int i = 0; i < numberOfBlinks; i++)
+        {
+            Dictionary<long, long> transformedStoneCounts = new Dictionary<long, long>();
+
+            foreach (var kvp in stoneCounts)
+            {
+                long stone = kvp.Key;
+                long count = kvp.Value;
+
+                if (stone == 0)
+                {
+                    // Replace 0 with 1, carrying over the count.
+                    if (!transformedStoneCounts.ContainsKey(1))
+                    {
+                        transformedStoneCounts[1] = 0;
+                    }
+                    transformedStoneCounts[1] += count;
+                }
+                else if (stone.ToString().Length % 2 == 0)
+                {
+                    // Split even-length stones into two halves.
+                    string stoneStr = stone.ToString();
+                    string leftPart = stoneStr.Substring(0, stoneStr.Length / 2);
+                    string rightPart = stoneStr.Substring(stoneStr.Length / 2);
+
+                    int leftStone = int.Parse(leftPart);
+                    int rightStone = int.Parse(rightPart);
+
+                    if (!transformedStoneCounts.ContainsKey(leftStone))
+                    {
+                        transformedStoneCounts[leftStone] = 0;
+                    }
+                    transformedStoneCounts[leftStone] += count;
+
+                    if (!transformedStoneCounts.ContainsKey(rightStone))
+                    {
+                        transformedStoneCounts[rightStone] = 0;
+                    }
+                    transformedStoneCounts[rightStone] += count;
+                }
+                else
+                {
+                    // Multiply odd-length stones by 2024.
+                    long multipliedStone = stone * 2024;
+                    if (!transformedStoneCounts.ContainsKey(multipliedStone))
+                    {
+                        transformedStoneCounts[multipliedStone] = 0;
+                    }
+                    transformedStoneCounts[multipliedStone] += count;
+                }
+            }
+
+            // Update the dictionary of stone counts for the next transformation.
+            stoneCounts = transformedStoneCounts;
+        }
+
+        // Return the total number of stones after all transformations.
+        return stoneCounts.Values.Sum();
     }
     #endregion
 }
