@@ -11,7 +11,7 @@ public class ElevenToFifteen
         bool usingTestInput = false;
 
         // The input files
-        string fileName = "assets/elevenToFifteen/AOC2024.11.";
+        string fileName = "/Users/jovinjovinsson/GitHub/Advent-of-Code-2024/AOC2024/assets/elevenToFifteen/AOC2024.11.";
         fileName += usingTestInput ? "Test-Input.txt" : "Input.txt";
 
         List<string> stoneLabels = new List<string>();
@@ -33,20 +33,28 @@ public class ElevenToFifteen
         OutputStones(ref stoneLabels, "Initial arrangement:");
 
         // Number of times we need to iterate, the test sample is much smaller
-        int numberOfBlinks = usingTestInput ? 6 : 25;
+        // int numberOfBlinks = usingTestInput ? 6 : 25;
+        int numberOfBlinks = 75;
 
         // Let's repeat our blinks to the required number
-        for (int i = 0; i < numberOfBlinks; i++)
-        {
+        // for (int i = 0; i < numberOfBlinks; i++)
+        // {
             // Update out list by blinking
-            Blink(ref stoneLabels);
+            // Blink(ref stoneLabels);
 
-            OutputStones(ref stoneLabels, "After " + (i + 1) + " blinks:");
+            long count = 0;
+
+            foreach (string stone in stoneLabels)
+            {
+                Blink(stone, numberOfBlinks, 0, ref count);
+            }
+
+            // OutputStones(ref stoneLabels, "After " + (i + 1) + " blinks:");
 
             Console.WriteLine("=============================");
-            Console.WriteLine("=== Number of Stones: {0} ===", stoneLabels.Count());
+            Console.WriteLine("=== Number of Stones: {0} ===", count);
             Console.WriteLine("=============================");
-        }
+        // }
     }
 
     /// <summary>
@@ -110,6 +118,31 @@ public class ElevenToFifteen
 
         // Replace the PBR list with our new list
         stoneLabels = afterBlink;
+    }
+
+    private void Blink(string stone, int numberOfBlinks, int currentBlink, ref long countOfStones)
+    {
+        currentBlink++;
+
+        if (currentBlink > numberOfBlinks) { countOfStones++; return; }
+
+        if (stone == "0")
+        {
+            Blink("1", numberOfBlinks, currentBlink, ref countOfStones);            
+        } else if (stone.Length % 2 == 0) // It's even in number of digits, let's split it
+        {
+            int length = stone.Length;
+            int midPoint = length / 2;
+            
+            Blink(long.Parse(stone.Substring(0, midPoint)).ToString(), numberOfBlinks, currentBlink, ref countOfStones);
+            Blink(long.Parse(stone.Substring(midPoint, (length - midPoint))).ToString(), numberOfBlinks, currentBlink, ref countOfStones);
+        } else 
+        {
+            // It didn't match the other rules, so lets multiply by 2024
+            long newStone = long.Parse(stone) * 2024;
+
+            Blink(newStone.ToString(), numberOfBlinks, currentBlink, ref countOfStones);
+        }
     }
     #endregion
 }
